@@ -142,6 +142,35 @@
         await _supabase.auth.signOut();
         location.reload();
     }
+
+    // 1. 管理員登入邏輯
+async function adminLogin(email, password) {
+    const { data, error } = await _supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        console.error("登入失敗:", error.message);
+    } else {
+        console.log("管理員已登入:", data.user.email);
+    }
+}
+
+// 2. 修改特定公告的內容 (只有當登入者的 Email 符合 RLS 規則時才會成功)
+async function updatePostContent(postId, newContent) {
+    const { data, error } = await _supabase
+        .from('posts')
+        .update({ content: newContent })
+        .eq('id', postId); // 指定要修改的文章 ID
+
+    if (error) {
+        // 如果 Email 不符合 RLS 規則，這裡會回傳錯誤
+        alert("修改失敗：您可能沒有管理員權限。內容：" + error.message);
+    } else {
+        alert("公告修改成功！");
+    }
+}
 </script>
 </body>
 </html>
