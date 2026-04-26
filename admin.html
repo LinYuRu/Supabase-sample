@@ -2,67 +2,118 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>永和慢跑 - 管理員後台</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        .container { max-width: 900px; margin-top: 50px; }
-        .post-card { border-left: 5px solid #0d6efd; margin-bottom: 15px; }
-        #admin-content { display: none; }
+        :root { --primary-color: #0d6efd; }
+        body { background-color: #f8f9fa; font-family: "Microsoft JhengHei", sans-serif; }
+        
+        /* 登入區塊置中 */
+        #login-section { min-height: 80vh; display: flex; align-items: center; }
+        
+        .container { max-width: 850px; }
+        
+        /* 公告卡片樣式 */
+        .post-card { 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            border: none;
+            border-left: 5px solid var(--primary-color);
+        }
+        .post-card:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+        }
+        
+        .category-badge { font-size: 0.75rem; padding: 0.3em 0.8em; border-radius: 50px; }
+        .bg-general { background-color: #e9ecef; color: #495057; }
+        .bg-event { background-color: #cfe2ff; color: #084298; }
+        .bg-member { background-color: #d1e7dd; color: #0f5132; }
+        .bg-rules { background-color: #fff3cd; color: #664d03; }
+
+        #admin-content { display: none; margin-top: 40px; margin-bottom: 60px; }
+        .loading-spinner { display: none; }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
 <div class="container">
-    <div id="login-section" class="card p-4 shadow-sm mx-auto" style="max-width: 400px;">
-        <h3 class="text-center mb-3">管理員登入</h3>
-        <input type="email" id="email" class="form-control mb-2" placeholder="管理員 Email">
-        <input type="password" id="password" class="form-control mb-3" placeholder="密碼">
-        <button onclick="handleLogin()" class="btn btn-primary w-100">進入後台</button>
+    <div id="login-section">
+        <div class="card p-4 shadow-sm mx-auto w-100" style="max-width: 400px;">
+            <div class="text-center mb-4">
+                <div class="bg-primary text-white rounded-circle d-inline-block p-3 mb-2">
+                    <i class="bi bi-person-lock fs-2"></i>
+                </div>
+                <h3>管理員登入</h3>
+                <p class="text-muted small">請輸入憑證以進入永和慢跑後台</p>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small">Email</label>
+                <input type="email" id="email" class="form-control" placeholder="admin@example.com">
+            </div>
+            <div class="mb-4">
+                <label class="form-label small">密碼</label>
+                <input type="password" id="password" class="form-control" placeholder="••••••••">
+            </div>
+            <button onclick="handleLogin()" class="btn btn-primary w-100 py-2">
+                <i class="bi bi-box-arrow-in-right me-1"></i> 進入後台
+            </button>
+        </div>
     </div>
 
     <div id="admin-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>公告管理後台</h2>
-            <div>
-                <button onclick="openAddModal()" class="btn btn-success btn-sm me-2">+ 新增公告</button>
-                <button onclick="handleLogout()" class="btn btn-outline-danger btn-sm">登出</button>
+        <div class="row align-items-center mb-4">
+            <div class="col">
+                <h2 class="fw-bold mb-0">公告管理後台</h2>
+                <p class="text-muted small mb-0">在此新增、編輯或移除跑團公告</p>
+            </div>
+            <div class="col-auto">
+                <button onclick="openAddModal()" class="btn btn-success shadow-sm me-2">
+                    <i class="bi bi-plus-lg me-1"></i> 新增公告
+                </button>
+                <button onclick="handleLogout()" class="btn btn-light border shadow-sm">
+                    <i class="bi bi-door-open me-1"></i> 登出
+                </button>
             </div>
         </div>
 
-        <div id="posts-list">
+        <div id="posts-list" class="mt-2">
             </div>
     </div>
 </div>
 
-<div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
                 <h5 class="modal-title" id="modalTitle">編輯公告</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="mb-3">
-                <label class="form-label">公告種類</label>
-                <select id="edit-category" class="form-select">
-                    <option value="general">一般公告</option>
-                    <option value="event">活動訊息</option>
-                    <option value="member">會員專區</option>
-                    <option value="rules">規章制度</option>
-                </select>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="edit-id"> <div class="mb-3">
-                    <label class="form-label">標題</label>
-                    <input type="text" id="edit-title" class="form-control">
+            <div class="modal-body p-4">
+                <input type="hidden" id="edit-id">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">公告種類</label>
+                    <select id="edit-category" class="form-select">
+                        <option value="general">一般公告</option>
+                        <option value="event">活動訊息</option>
+                        <option value="member">會員專區</option>
+                        <option value="rules">規章制度</option>
+                    </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">內容</label>
-                    <textarea id="edit-text" class="form-control" rows="5"></textarea>
+                    <label class="form-label fw-bold">標題</label>
+                    <input type="text" id="edit-title" class="form-control" placeholder="例如：春季團練公告">
+                </div>
+                <div class="mb-0">
+                    <label class="form-label fw-bold">內容</label>
+                    <textarea id="edit-text" class="form-control" rows="6" placeholder="支援 HTML 標籤..."></textarea>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button onclick="submitSave()" class="btn btn-primary" id="saveBtn">儲存</button>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button onclick="submitSave()" class="btn btn-primary px-4" id="saveBtn">儲存</button>
             </div>
         </div>
     </div>
@@ -75,18 +126,21 @@
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let editModal;
 
-    // 1. 初始化
+    const catNames = {
+        'general': '一般公告',
+        'event': '活動訊息',
+        'member': '會員專區',
+        'rules': '規章制度'
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         editModal = new bootstrap.Modal(document.getElementById('editModal'));
         checkSession();
     });
 
-    // 2. 登入檢查
     async function checkSession() {
         const { data: { session } } = await _supabase.auth.getSession();
-        if (session) {
-            showAdmin();
-        }
+        if (session) showAdmin();
     }
 
     async function handleLogin() {
@@ -103,163 +157,6 @@
         loadPosts();
     }
 
-    // 3. 讀取公告清單
     async function loadPosts() {
-        const { data, error } = await _supabase.from('posts').select('*').order('id', { ascending: true });
         const listDiv = document.getElementById('posts-list');
-        listDiv.innerHTML = '';
-        
-        // 修改 loadPosts 函式內的迴圈部分
-data.forEach(post => {
-    listDiv.innerHTML += `
-        <div class="card post-card shadow-sm p-3 mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">${post.title}</h5>
-                <div>
-                    <button class="btn btn-outline-danger btn-sm me-2" 
-                            onclick="handleDelete(${post.id})">
-                        刪除
-                    </button>
-                    <button class="btn btn-warning btn-sm" 
-                            onclick="openEditModal(${post.id}, '${post.title}', \`${post.content}\`)">
-                        編輯
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-});
-    }
-
-    // 4. 開啟編輯視窗
-    function openEditModal(id, title, content) {
-        document.getElementById('edit-id').value = id;
-        document.getElementById('edit-title').value = title;
-        document.getElementById('edit-text').value = content;
-        editModal.show();
-    }
-
-    // 5. 送出修改至 Supabase
-    async function submitUpdate() {
-        const id = document.getElementById('edit-id').value;
-        const title = document.getElementById('edit-title').value;
-        const content = document.getElementById('edit-text').value;
-        
-
-        const { error } = await _supabase
-            .from('posts')
-            .update({ title, content })
-            .eq('id', id);
-
-        if (error) {
-            alert("修改失敗！可能是 Email 不符合管理員權限。\n錯誤訊息：" + error.message);
-        } else {
-            alert("修改成功！");
-            editModal.hide();
-            loadPosts();
-        }
-    }
-
-    // A. 開啟新增視窗
-function openAddModal() {
-    document.getElementById('modalTitle').innerText = "新增公告";
-    document.getElementById('saveBtn').innerText = "立即發佈";
-    document.getElementById('edit-id').value = ""; // 清空 ID 代表新增
-    document.getElementById('edit-title').value = "";
-    document.getElementById('edit-text').value = "";
-    editModal.show();
-}
-
-// B. 開啟編輯視窗 (原本的 openEditModal 改良)
-function openEditModal(id, title, content) {
-    document.getElementById('modalTitle').innerText = "編輯公告";
-    document.getElementById('saveBtn').innerText = "儲存修改";
-    document.getElementById('edit-id').value = id;
-    document.getElementById('edit-title').value = title;
-    document.getElementById('edit-text').value = content;
-    editModal.show();
-}
-
-// C. 統一提交邏輯
-async function submitSave() {
-    const id = document.getElementById('edit-id').value;
-    const title = document.getElementById('edit-title').value;
-    const content = document.getElementById('edit-text').value;
-    const category = document.getElementById('edit-category').value; // 取得分類
-
-    let result;
-    const payload = { title, content, category };
-
-    if (id) {        
-        // 執行更新
-        result = await _supabase.from('posts').update(payload).eq('id', id);
-    } else {
-        // 執行新增
-        result = await _supabase.from('posts').insert([payload]);
-    }
-
-    if (result.error) {
-        alert("操作失敗：\n" + result.error.message);
-    } else {
-        alert(id ? "修改成功！" : "發佈成功！");
-        editModal.hide();
-        loadPosts();
-    }
-}
-
-async function handleDelete(id) {
-    // 1. 跳出二次確認，避免手滑
-    if (!confirm("確定要刪除這則公告嗎？刪除後將無法復原。")) {
-        return;
-    }
-
-    // 2. 執行 Supabase 刪除指令
-    const { error } = await _supabase
-        .from('posts')
-        .delete()
-        .eq('id', id); // 根據 ID 刪除特定列
-
-    // 3. 處理結果
-    if (error) {
-        alert("刪除失敗：\n" + error.message);
-    } else {
-        alert("公告已成功刪除！");
-        loadPosts(); // 重新讀取清單，讓該筆資料在畫面上消失
-    }
-}
-    async function handleLogout() {
-        await _supabase.auth.signOut();
-        location.reload();
-    }
-
-    // 1. 管理員登入邏輯
-async function adminLogin(email, password) {
-    const { data, error } = await _supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-    });
-
-    if (error) {
-        console.error("登入失敗:", error.message);
-    } else {
-        console.log("管理員已登入:", data.user.email);
-    }
-}
-
-// 2. 修改特定公告的內容 (只有當登入者的 Email 符合 RLS 規則時才會成功)
-async function updatePostContent(postId, newContent) {
-    const { data, error } = await _supabase
-        .from('posts')
-        .update({ content: newContent })
-        .eq('id', postId); // 指定要修改的文章 ID
-
-    if (error) {
-        // 如果 Email 不符合 RLS 規則，這裡會回傳錯誤
-        alert("修改失敗：您可能沒有管理員權限。內容：" + error.message);
-    } else {
-        alert("公告修改成功！");
-    }
-}
-</script>
-</body>
-</html>
+        listDiv.innerHTML = '<div class="text-center p-5">
