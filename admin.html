@@ -100,16 +100,26 @@
         const listDiv = document.getElementById('posts-list');
         listDiv.innerHTML = '';
         
-        data.forEach(post => {
-            listDiv.innerHTML += `
-                <div class="card post-card shadow-sm p-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">${post.title}</h5>
-                        <button class="btn btn-warning btn-sm" onclick="openEditModal(${post.id}, '${post.title}', \`${post.content}\`)">編輯</button>
-                    </div>
+        // 修改 loadPosts 函式內的迴圈部分
+data.forEach(post => {
+    listDiv.innerHTML += `
+        <div class="card post-card shadow-sm p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">${post.title}</h5>
+                <div>
+                    <button class="btn btn-outline-danger btn-sm me-2" 
+                            onclick="handleDelete(${post.id})">
+                        刪除
+                    </button>
+                    <button class="btn btn-warning btn-sm" 
+                            onclick="openEditModal(${post.id}, '${post.title}', \`${post.content}\`)">
+                        編輯
+                    </button>
                 </div>
-            `;
-        });
+            </div>
+        </div>
+    `;
+});
     }
 
     // 4. 開啟編輯視窗
@@ -188,7 +198,27 @@ async function submitSave() {
         loadPosts();
     }
 }
-    
+
+async function handleDelete(id) {
+    // 1. 跳出二次確認，避免手滑
+    if (!confirm("確定要刪除這則公告嗎？刪除後將無法復原。")) {
+        return;
+    }
+
+    // 2. 執行 Supabase 刪除指令
+    const { error } = await _supabase
+        .from('posts')
+        .delete()
+        .eq('id', id); // 根據 ID 刪除特定列
+
+    // 3. 處理結果
+    if (error) {
+        alert("刪除失敗：\n" + error.message);
+    } else {
+        alert("公告已成功刪除！");
+        loadPosts(); // 重新讀取清單，讓該筆資料在畫面上消失
+    }
+}
     async function handleLogout() {
         await _supabase.auth.signOut();
         location.reload();
