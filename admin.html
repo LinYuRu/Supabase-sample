@@ -42,6 +42,15 @@
                 <h5 class="modal-title" id="modalTitle">編輯公告</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <div class="mb-3">
+                <label class="form-label">公告種類</label>
+                <select id="edit-category" class="form-select">
+                    <option value="general">一般公告</option>
+                    <option value="event">活動訊息</option>
+                    <option value="member">會員專區</option>
+                    <option value="rules">規章制度</option>
+                </select>
+            </div>
             <div class="modal-body">
                 <input type="hidden" id="edit-id"> <div class="mb-3">
                     <label class="form-label">標題</label>
@@ -135,6 +144,7 @@ data.forEach(post => {
         const id = document.getElementById('edit-id').value;
         const title = document.getElementById('edit-title').value;
         const content = document.getElementById('edit-text').value;
+        
 
         const { error } = await _supabase
             .from('posts')
@@ -175,19 +185,18 @@ async function submitSave() {
     const id = document.getElementById('edit-id').value;
     const title = document.getElementById('edit-title').value;
     const content = document.getElementById('edit-text').value;
+    const category = document.getElementById('edit-category').value; // 取得分類
 
     let result;
-    if (id) {
+    const payload = { title, content, category };
+
+    let result;
+    if (id) {        
         // 執行更新
-        result = await _supabase
-            .from('posts')
-            .update({ title, content })
-            .eq('id', id);
+        result = await _supabase.from('posts').update(payload).eq('id', id);
     } else {
         // 執行新增
-        result = await _supabase
-            .from('posts')
-            .insert([{ title, content }]);
+        result = await _supabase.from('posts').insert([payload]);
     }
 
     if (result.error) {
