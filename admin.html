@@ -159,4 +159,112 @@
 
     async function loadPosts() {
         const listDiv = document.getElementById('posts-list');
-        listDiv.innerHTML = '<div class="text-center p-5">
+        listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
+        
+        const { data, error } = await _supabase.from('posts').select('*').order('created_at', { ascending: false });
+        
+        if (error) {
+            listDiv.innerHTML = `<div class="alert alert-danger">載入失敗: ${error.message}</div>`;
+            return;
+        }
+
+        if (data.length === 0) {
+            listDiv.innerHTML = `<div class="text-center p-5 bg-white rounded shadow-sm"><i class="bi bi-inbox fs-1 text-muted"></i><p class="mt-2 text-muted">目前沒有任何公告</p></div>`;
+            return;
+        }
+
+        listDiv.innerHTML = '';
+        data.forEach(post => {
+            const catClass = `bg-${post.category || 'general'}`;
+            const catName = catNames[post.category] || '未分類';
+            
+            listDiv.innerHTML += `
+                <div class="card post-card shadow-sm p-3 mb-3 bg-white">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <span class="category-badge ${catClass} mb-2 d-inline-block">${catName}</span>
+                            <h5 class="mb-1 fw-bold text-dark">${post.title}</h5>
+                            <small class="text-muted"><i class="bi bi-clock me-1"></i>${new Date(post.created_at).toLocaleDateString()}</small>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-outline-primary btn-sm me-1" 
+                                    onclick="openEditModal(${post.id}, '${post.title}', \`${post.content}\`, '${post.category}')">
+                                <i class="bi bi-pencil"></i> 編輯
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" 
+                                    onclick="handleDelete(${post.id})">
+                                <i class="bi bi-trash"></i> 刪除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function openAddModal() {
+        document.getElementById('modalTitle').innerText = "新增公告";
+        document.getElementById('saveBtn').innerText = "立即發佈";
+        document.getElementById('edit-id').value = "";
+        document.getElementById('edit-title').value = "";
+        document.getElementById('edit-text').value = "";
+        document.getElementById('edit-category').value = "general";
+        editModal.show();
+    }
+
+    function openEditModal(id, title, content, category) {
+        document.getElementById('modalTitle').innerText = "編輯公告";
+        document.getElementById('saveBtn').innerText = "儲存修改";
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-title').value = title;
+        document.getElementById('edit-text').value = content;
+        document.getElementById('edit-category').value = category || "general";
+        editModal.show();
+    }
+
+    async function submitSave() {
+        const id = document.getElementById('edit-id').value;
+        const title = document.getElementById('edit-title').value;
+        const content = document.getElementById('edit-text').value;
+        const category = document.getElementById('edit-category').value;
+
+        if (!title || !content) return alert("請填寫標題與內容");
+
+        const btn = document.getElementById('saveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 處理中...';
+
+        const payload = { title, content, category };
+        let error;
+        
+        if (id) {
+            const res = await _supabase.from('posts').update(payload).eq('id', id);
+            error = res.error;
+        } else {
+            const res = await _supabase.from('posts').insert([payload]);
+            error = res.error;
+        }
+
+        if (error) alert("操作失敗：" + error.message);
+        else {
+            editModal.hide();
+            loadPosts();
+        }
+        btn.disabled = false;
+        btn.innerText = "儲存";
+    }
+
+    async function handleDelete(id) {
+        if (!confirm("確定要刪除這則公告嗎？刪除後將無法復原。")) return;
+        const { error } = await _supabase.from('posts').delete().eq('id', id);
+        if (error) alert("刪除失敗：" + error.message);
+        else loadPosts();
+    }
+
+    async function handleLogout() {
+        await _supabase.auth.signOut();
+        location.reload();
+    }
+</script>
+</body>
+</html>
