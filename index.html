@@ -37,6 +37,47 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
+        // 2. 從資料庫抓取資料
+        async function fetchPosts() {
+            const { data, error } = await _supabase
+                .from('posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('抓取失敗:', error);
+                document.getElementById('loading').innerText = "連線失敗";
+                return;
+            }
+
+            displayPosts(data);
+        }
+
+        // 3. 渲染到 HTML
+        // function displayPosts(posts) {
+        //     const list = document.getElementById('post-list');
+        //     const loading = document.getElementById('loading');
+        //     loading.style.display = 'none';
+
+        //     posts.forEach(post => {
+        //         const card = `
+        //             <div class="col-md-6 mb-3">
+        //                 <div class="card">
+        //                     <div class="card-body">
+        //                         <h5 class="card-title">${post.title}</h5>
+        //                         <p class="card-text">${post.content}</p>
+        //                         <small class="text-muted">${new Date(post.created_at).toLocaleDateString()}</small>
+        //                     </div>
+        //                 </div>
+        //             </div>
+        //         `;
+        //         list.innerHTML += card;
+        //     });
+        // }
+
+        fetchPosts();
+
+        
 async function loadPosts() {
     const { data, error } = await _supabase.from('posts').select('*').order('created_at', { ascending: false });
     
@@ -58,45 +99,6 @@ async function loadPosts() {
         }
     });
 }
-        // 2. 從資料庫抓取資料
-        async function fetchPosts() {
-            const { data, error } = await _supabase
-                .from('posts')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('抓取失敗:', error);
-                document.getElementById('loading').innerText = "連線失敗";
-                return;
-            }
-
-            displayPosts(data);
-        }
-
-        // 3. 渲染到 HTML
-        function displayPosts(posts) {
-            const list = document.getElementById('post-list');
-            const loading = document.getElementById('loading');
-            loading.style.display = 'none';
-
-            posts.forEach(post => {
-                const card = `
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">${post.title}</h5>
-                                <p class="card-text">${post.content}</p>
-                                <small class="text-muted">${new Date(post.created_at).toLocaleDateString()}</small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                list.innerHTML += card;
-            });
-        }
-
-        fetchPosts();
     </script>
 </body>
 </html>
