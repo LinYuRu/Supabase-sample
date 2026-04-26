@@ -190,7 +190,6 @@ async function submitSave() {
     let result;
     const payload = { title, content, category };
 
-    let result;
     if (id) {        
         // 執行更新
         result = await _supabase.from('posts').update(payload).eq('id', id);
