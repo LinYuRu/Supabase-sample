@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>永和慢跑 - 最新公告全覽</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 900px; margin-top: 50px; margin-bottom: 50px; }
+        .nav-tabs .nav-link { color: #495057; font-weight: bold; }
+        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="mb-4">
+        <a href="index.html" class="btn btn-outline-secondary btn-sm mb-3">← 返回首頁</a>
+        <h1 class="fw-bold">最新公告全覽</h1>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="announcementTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cat-general" type="button">一般公告</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-event" type="button">活動訊息</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-member" type="button">會員專區</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-rules" type="button">規章制度</button>
+        </li>
+    </ul>
+
+    <div class="tab-content bg-white p-4 rounded shadow-sm border">
+        <div class="tab-pane fade show active" id="cat-general">讀取中...</div>
+        <div class="tab-pane fade" id="cat-event"></div>
+        <div class="tab-pane fade" id="cat-member"></div>
+        <div class="tab-pane fade" id="cat-rules"></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const SUPABASE_URL = 'https://awenxjiniepxbnbxdefl.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadPosts() {
+        const { data, error } = await _supabase
+            .from('posts')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('抓取失敗:', error);
+            return;
+        }
+
+        const categories = ['general', 'event', 'member', 'rules'];
+        categories.forEach(cat => {
+            const el = document.getElementById(`cat-${cat}`);
+            if (el) el.innerHTML = '';
+        });
+
+        data.forEach(post => {
+            const container = document.getElementById(`cat-${post.category}`);
+            if (container) {
+                container.innerHTML += `
+                    <div class="card mb-3 border-0 border-bottom rounded-0">
+                        <div class="card-body px-0">
+                            <h5 class="card-title text-primary fw-bold">${post.title}</h5>
+                            <div class="card-text text-secondary mb-2">${post.content}</div>
+                            <small class="text-muted">發佈於 ${new Date(post.created_at).toLocaleDateString()}</small>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        categories.forEach(cat => {
+            const el = document.getElementById(`cat-${cat}`);
+            if (el && el.innerHTML === '') {
+                el.innerHTML = '<p class="text-muted py-4 text-center">目前暫無此分類公告</p>';
+            }
+        });
+    }
+
+    loadPosts();
+</script>
+</body>
+</html>
