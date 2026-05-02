@@ -64,23 +64,60 @@
     </div>
 
     <div id="admin-content">
-        <div class="row align-items-center mb-4">
-            <div class="col">
-                <h2 class="fw-bold mb-0">公告管理後台</h2>
-                <p class="text-muted small mb-0">在此新增、編輯或移除跑團公告</p>
+        <!-- 分頁標籤 -->
+        <ul class="nav nav-tabs mb-4" id="adminTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts-panel" type="button">
+                    <i class="bi bi-megaphone me-1"></i> 公告管理
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold" id="members-tab" data-bs-toggle="tab" data-bs-target="#members-panel" type="button">
+                    <i class="bi bi-people me-1"></i> 會員管理
+                </button>
+            </li>
+        </ul>
+
+        <!-- 分頁內容 -->
+        <div class="tab-content" id="adminTabContent">
+            <!-- 公告管理分頁 -->
+            <div class="tab-pane fade show active" id="posts-panel" role="tabpanel">
+                <div class="row align-items-center mb-4">
+                    <div class="col">
+                        <h4 class="fw-bold mb-0">最新公告列表</h4>
+                    </div>
+                    <div class="col-auto">
+                        <button onclick="openAddModal()" class="btn btn-success shadow-sm">
+                            <i class="bi bi-plus-lg me-1"></i> 新增公告
+                        </button>
+                    </div>
+                </div>
+                <div id="posts-list"></div>
             </div>
-            <div class="col-auto">
-                <button onclick="openAddModal()" class="btn btn-success shadow-sm me-2">
-                    <i class="bi bi-plus-lg me-1"></i> 新增公告
-                </button>
-                <button onclick="handleLogout()" class="btn btn-light border shadow-sm">
-                    <i class="bi bi-door-open me-1"></i> 登出
-                </button>
+
+            <!-- 會員管理分頁 -->
+            <div class="tab-pane fade" id="members-panel" role="tabpanel">
+                <div class="row align-items-center mb-4">
+                    <div class="col">
+                        <h4 class="fw-bold mb-0">會員資料庫</h4>
+                    </div>
+                    <div class="col-auto">
+                        <button onclick="openMemberModal()" class="btn btn-primary shadow-sm">
+                            <i class="bi bi-person-plus me-1"></i> 新增會員
+                        </button>
+                    </div>
+                </div>
+                <!-- 新增一個容器來顯示會員列表 -->
+                <div id="members-list"></div>
             </div>
         </div>
 
-        <div id="posts-list" class="mt-2">
-            </div>
+        <!-- 登出按鈕移至底部或導覽列 -->
+        <div class="text-center mt-5">
+            <button onclick="handleLogout()" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-door-open me-1"></i> 登出管理系統
+            </button>
+        </div>
     </div>
 </div>
 
@@ -133,10 +170,25 @@
         'rules': '規章制度'
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        editModal = new bootstrap.Modal(document.getElementById('editModal'));
-        checkSession();
-    });
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. 安全地初始化 Modal，確保元素存在
+    const editEl = document.getElementById('editModal');
+    if (editEl) editModal = new bootstrap.Modal(editEl);
+
+    const memberEl = document.getElementById('memberModal');
+    if (memberEl) memberModal = new bootstrap.Modal(memberEl);
+
+    // 2. 關鍵修正：確保 members-tab 存在才綁定監聽器
+    const memberTabEl = document.getElementById('members-tab');
+    if (memberTabEl) {
+        memberTabEl.addEventListener('shown.bs.tab', () => {
+            loadMembers();
+        });
+    }
+
+    // 3. 檢查登入狀態
+    checkSession();
+});
 
     async function checkSession() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -265,6 +317,68 @@
         await _supabase.auth.signOut();
         location.reload();
     }
+
+function showAdmin() {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    loadPosts();
+}
+
+async function loadMembers() {
+    const listDiv = document.getElementById('members-list');
+
+    // 安全檢查：確保畫面上真的有這個容器，避免報錯
+    if (!listDiv) return;
+
+    listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
+
+    // 從 members 資料表抓取資料
+    const { data, error } = await _supabase.from('members').select('*').order('created_at', { ascending: false });
+
+    if (error) {
+        listDiv.innerHTML = `<div class="alert alert-danger">載入會員失敗: ${error.message}</div>`;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        listDiv.innerHTML = `<div class="text-center p-5 bg-white rounded border"><p class="text-muted">尚無會員資料</p></div>`;
+        return;
+    }
+
+    // 建立會員表格
+    let html = `
+        <div class="table-responsive bg-white rounded shadow-sm border p-3">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>姓名</th>
+                        <th>類別</th>
+                        <th>組別</th>
+                        <th>入會費</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+    data.forEach(m => {
+        // 修正處：移除後方的[cite: 1] 標籤，這是導致語法錯誤的主因
+        const catMap = { 'Applicant': '申請中', 'General': '一般', 'Permanent': '永久', 'Student': '學生' };
+
+        html += `
+            <tr>
+                <td><strong>${m.name}</strong></td>
+                <td><span class="badge bg-light text-dark border">${catMap[m.category] || m.category}</span></td>
+                <td>${m.group_number ? `第 ${m.group_number} 組` : '-'}</td>
+                <td>${m.entrance_fee_paid ? '<span class="text-success">已繳</span>' : '<span class="text-danger">未繳</span>'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></button>
+                </td>
+            </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+    listDiv.innerHTML = html;
+}
 </script>
 </body>
 </html>
