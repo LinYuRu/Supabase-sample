@@ -6,27 +6,28 @@
     <title>永和慢跑 - 管理員後台</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root { --primary-color: #0d6efd; }
         body { background-color: #f8f9fa; font-family: "Microsoft JhengHei", sans-serif; }
-        
+
         /* 登入區塊置中 */
         #login-section { min-height: 80vh; display: flex; align-items: center; }
-        
+
         .container { max-width: 850px; }
-        
+
         /* 公告卡片樣式 */
-        .post-card { 
-            transition: transform 0.2s, box-shadow 0.2s; 
+        .post-card {
+            transition: transform 0.2s, box-shadow 0.2s;
             border: none;
             border-left: 5px solid var(--primary-color);
         }
-        .post-card:hover { 
+        .post-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
         }
-        
+
         .category-badge { font-size: 0.75rem; padding: 0.3em 0.8em; border-radius: 50px; }
         .bg-general { background-color: #e9ecef; color: #495057; }
         .bg-event { background-color: #cfe2ff; color: #084298; }
@@ -64,7 +65,6 @@
     </div>
 
     <div id="admin-content">
-        <!-- 分頁標籤 -->
         <ul class="nav nav-tabs mb-4" id="adminTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active fw-bold" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts-panel" type="button">
@@ -76,11 +76,14 @@
                     <i class="bi bi-people me-1"></i> 會員管理
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold" id="activities-tab" data-bs-toggle="tab" data-bs-target="#activities-panel" type="button">
+                    <i class="bi bi-calendar-event me-1"></i> 活動管理
+                </button>
+            </li>
         </ul>
 
-        <!-- 分頁內容 -->
         <div class="tab-content" id="adminTabContent">
-            <!-- 公告管理分頁 -->
             <div class="tab-pane fade show active" id="posts-panel" role="tabpanel">
                 <div class="row align-items-center mb-4">
                     <div class="col">
@@ -95,7 +98,6 @@
                 <div id="posts-list"></div>
             </div>
 
-            <!-- 會員管理分頁 -->
             <div class="tab-pane fade" id="members-panel" role="tabpanel">
                 <div class="row align-items-center mb-4">
                     <div class="col">
@@ -107,12 +109,24 @@
                         </button>
                     </div>
                 </div>
-                <!-- 新增一個容器來顯示會員列表 -->
                 <div id="members-list"></div>
+            </div>
+
+            <div class="tab-pane fade" id="activities-panel" role="tabpanel">
+                <div class="row align-items-center mb-4">
+                    <div class="col">
+                        <h4 class="fw-bold mb-0">活動賽事管理</h4>
+                    </div>
+                    <div class="col-auto">
+                        <button onclick="openActivityModal()" class="btn btn-warning shadow-sm fw-bold text-dark">
+                            <i class="bi bi-calendar-plus me-1"></i> 新增活動
+                        </button>
+                    </div>
+                </div>
+                <div id="activities-list"></div>
             </div>
         </div>
 
-        <!-- 登出按鈕移至底部或導覽列 -->
         <div class="text-center mt-5">
             <button onclick="handleLogout()" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-door-open me-1"></i> 登出管理系統
@@ -156,12 +170,148 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<div class="modal fade" id="memberModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>新增會員資料</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="memberForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">姓名</label>
+                            <input type="text" id="m-name" class="form-control" required placeholder="請輸入姓名">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">性別</label>
+                            <select id="m-gender" class="form-select">
+                                <option value="">請選擇性別</option>
+                                <option value="Male">男</option>
+                                <option value="Female">女</option>
+                                <option value="Other">其他</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">出生年月日</label>
+                            <input type="date" id="m-birth_date" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">電話</label>
+                            <input type="tel" id="m-phone" class="form-control" value="09" placeholder="0912-345678">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Email (登入/聯繫用)</label>
+                            <input type="email" id="m-email" class="form-control" value="@gmail.com" placeholder="example@mail.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">會員類別</label>
+                            <select id="m-category" class="form-select">
+                                <option value="Applicant">申請中 (新入會)</option>
+                                <option value="Student">學生會員</option>
+                                <option value="General">一般會員</option>
+                                <option value="Permanent">永久會員</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">所屬組別</label>
+                            <select id="m-group_number" class="form-select">
+                                <option value="">請選擇組別</option>
+                                <option value="1">第 1 組</option>
+                                <option value="2">第 2 組</option>
+                                <option value="3">第 3 組</option>
+                                <option value="4">第 4 組</option>
+                                <option value="5">第 5 組</option>
+                                <option value="6">第 6 組</option>
+                                <option value="7">第 7 組</option>
+                                <option value="8">第 8 組</option>
+                                <option value="9">第 9 組</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">通訊地址</label>
+                            <input type="text" id="m-address" class="form-control" placeholder="請輸入完整地址">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="m-is_student">
+                                <label class="form-check-label fw-bold" for="m-is_student">具備學生身份</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="m-entrance_fee_paid">
+                                <label class="form-check-label fw-bold" for="m-entrance_fee_paid">已繳納入會費 (1000元)</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button onclick="submitMember()" class="btn btn-primary px-4" id="memberSaveBtn">儲存會員</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="bi bi-calendar-plus me-2"></i>新增活動賽事</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="activityForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">活動名稱 / 賽事名稱</label>
+                        <input type="text" id="a-title" class="form-control" required placeholder="例如：2026 金山馬拉松團報">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">活動日期</label>
+                        <input type="date" id="a-activity_date" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">活動地點</label>
+                        <input type="text" id="a-location" class="form-control" placeholder="例如：新北市金山區">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">活動類型</label>
+                        <select id="a-activity_type" class="form-select">
+                            <option value="團練">例行團練</option>
+                            <option value="賽事">官方賽事 / 團報</option>
+                            <option value="聚會">聯誼聚餐</option>
+                            <option value="其他">其他活動</option>
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="a-is_locked">
+                            <label class="form-check-label fw-bold" for="a-is_locked">鎖定活動 (禁止修改/報名)</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button onclick="submitActivity()" class="btn btn-warning px-4 fw-bold text-dark" id="activitySaveBtn">儲存活動</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const SUPABASE_URL = 'https://awenxjiniepxbnbxdefl.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     let editModal;
+    let memberModal;
+    let activityModal;
+    let currentMemberId = null;
+    let currentActivityId = null;
 
     const catNames = {
         'general': '一般公告',
@@ -170,25 +320,29 @@
         'rules': '規章制度'
     };
 
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. 安全地初始化 Modal，確保元素存在
-    const editEl = document.getElementById('editModal');
-    if (editEl) editModal = new bootstrap.Modal(editEl);
+    document.addEventListener('DOMContentLoaded', () => {
+        // 由於 Bootstrap 已經在 head 優先載入，此處可以安全初始化
+        const editEl = document.getElementById('editModal');
+        if (editEl) editModal = new bootstrap.Modal(editEl);
 
-    const memberEl = document.getElementById('memberModal');
-    if (memberEl) memberModal = new bootstrap.Modal(memberEl);
+        const memberEl = document.getElementById('memberModal');
+        if (memberEl) memberModal = new bootstrap.Modal(memberEl);
 
-    // 2. 關鍵修正：確保 members-tab 存在才綁定監聽器
-    const memberTabEl = document.getElementById('members-tab');
-    if (memberTabEl) {
-        memberTabEl.addEventListener('shown.bs.tab', () => {
-            loadMembers();
-        });
-    }
+        const activityEl = document.getElementById('activityModal');
+        if (activityEl) activityModal = new bootstrap.Modal(activityEl);
 
-    // 3. 檢查登入狀態
-    checkSession();
-});
+        const memberTabEl = document.getElementById('members-tab');
+        if (memberTabEl) {
+            memberTabEl.addEventListener('shown.bs.tab', () => { loadMembers(); });
+        }
+
+        const activityTabEl = document.getElementById('activities-tab');
+        if (activityTabEl) {
+            activityTabEl.addEventListener('shown.bs.tab', () => { loadActivities(); });
+        }
+
+        checkSession();
+    });
 
     async function checkSession() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -209,27 +363,27 @@ document.addEventListener('DOMContentLoaded', () => {
         loadPosts();
     }
 
+    async function handleLogout() {
+        await _supabase.auth.signOut();
+        location.reload();
+    }
+
+    /* ==========================================
+       1. 公告管理 邏輯區塊
+       ========================================== */
     async function loadPosts() {
         const listDiv = document.getElementById('posts-list');
         listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
-        
-        const { data, error } = await _supabase.from('posts').select('*').order('created_at', { ascending: false });
-        
-        if (error) {
-            listDiv.innerHTML = `<div class="alert alert-danger">載入失敗: ${error.message}</div>`;
-            return;
-        }
 
-        if (data.length === 0) {
-            listDiv.innerHTML = `<div class="text-center p-5 bg-white rounded shadow-sm"><i class="bi bi-inbox fs-1 text-muted"></i><p class="mt-2 text-muted">目前沒有任何公告</p></div>`;
-            return;
-        }
+        const { data, error } = await _supabase.from('posts').select('*').order('created_at', { ascending: false });
+        if (error) { listDiv.innerHTML = `<div class="alert alert-danger">載入失敗: ${error.message}</div>`; return; }
+        if (data.length === 0) { listDiv.innerHTML = `<div class="text-center p-5 bg-white rounded shadow-sm"><p class="text-muted">目前沒有任何公告</p></div>`; return; }
 
         listDiv.innerHTML = '';
         data.forEach(post => {
             const catClass = `bg-${post.category || 'general'}`;
             const catName = catNames[post.category] || '未分類';
-            
+
             listDiv.innerHTML += `
                 <div class="card post-card shadow-sm p-3 mb-3 bg-white">
                     <div class="row align-items-center">
@@ -239,18 +393,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             <small class="text-muted"><i class="bi bi-clock me-1"></i>${new Date(post.created_at).toLocaleDateString()}</small>
                         </div>
                         <div class="col-auto">
-                            <button class="btn btn-outline-primary btn-sm me-1" 
-                                    onclick="openEditModal(${post.id}, '${post.title}', \`${post.content}\`, '${post.category}')">
-                                <i class="bi bi-pencil"></i> 編輯
-                            </button>
-                            <button class="btn btn-outline-danger btn-sm" 
-                                    onclick="handleDelete(${post.id})">
-                                <i class="bi bi-trash"></i> 刪除
-                            </button>
+                            <button class="btn btn-outline-primary btn-sm me-1" onclick="openEditModal(${post.id}, '${post.title}', \`${post.content}\`, '${post.category}')"><i class="bi bi-pencil"></i> 編輯</button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="handleDelete(${post.id})"><i class="bi bi-trash"></i> 刪除</button>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
     }
 
@@ -284,101 +431,325 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const btn = document.getElementById('saveBtn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 處理中...';
-
         const payload = { title, content, category };
         let error;
-        
-        if (id) {
-            const res = await _supabase.from('posts').update(payload).eq('id', id);
-            error = res.error;
-        } else {
-            const res = await _supabase.from('posts').insert([payload]);
-            error = res.error;
-        }
+
+        if (id) { error = (await _supabase.from('posts').update(payload).eq('id', id)).error; }
+        else { error = (await _supabase.from('posts').insert([payload])).error; }
 
         if (error) alert("操作失敗：" + error.message);
-        else {
-            editModal.hide();
-            loadPosts();
-        }
-        btn.disabled = false;
-        btn.innerText = "儲存";
+        else { editModal.hide(); loadPosts(); }
+        btn.disabled = false; btn.innerText = "儲存";
     }
 
     async function handleDelete(id) {
-        if (!confirm("確定要刪除這則公告嗎？刪除後將無法復原。")) return;
+        if (!confirm("確定要刪除這則公告嗎？")) return;
         const { error } = await _supabase.from('posts').delete().eq('id', id);
-        if (error) alert("刪除失敗：" + error.message);
-        else loadPosts();
+        if (error) alert("刪除失敗：" + error.message); else loadPosts();
     }
 
-    async function handleLogout() {
-        await _supabase.auth.signOut();
-        location.reload();
+
+    /* ==========================================
+       2. 會員管理 邏輯區塊
+       ========================================== */
+    function openMemberModal() {
+        currentMemberId = null;
+        document.getElementById('memberForm').reset();
+        document.querySelector('#memberModal .modal-title').innerHTML = '<i class="bi bi-person-plus me-2"></i>新增會員資料';
+        document.getElementById('memberSaveBtn').innerText = "儲存會員";
+        memberModal.show();
     }
 
-function showAdmin() {
-    document.getElementById('login-section').style.display = 'none';
-    document.getElementById('admin-content').style.display = 'block';
-    loadPosts();
-}
+    function openEditMemberModal(memberStr) {
+        const member = JSON.parse(memberStr);
+        currentMemberId = member.id;
 
-async function loadMembers() {
-    const listDiv = document.getElementById('members-list');
+        document.querySelector('#memberModal .modal-title').innerHTML = '<i class="bi bi-pencil-square me-2"></i>修改會員資料';
+        document.getElementById('memberSaveBtn').innerText = "更新會員";
 
-    // 安全檢查：確保畫面上真的有這個容器，避免報錯
-    if (!listDiv) return;
+        document.getElementById('m-name').value = member.name || '';
+        document.getElementById('m-gender').value = member.gender || '';
+        document.getElementById('m-birth_date').value = member.birth_date || '';
+        document.getElementById('m-phone').value = member.phone || '';
+        document.getElementById('m-email').value = member.email || '';
+        document.getElementById('m-category').value = member.category || 'Applicant';
+        document.getElementById('m-group_number').value = member.group_number || '';
+        document.getElementById('m-address').value = member.address || '';
 
-    listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
+        document.getElementById('m-is_student').checked = member.is_student || false;
+        document.getElementById('m-entrance_fee_paid').checked = member.entrance_fee_paid || false;
 
-    // 從 members 資料表抓取資料
-    const { data, error } = await _supabase.from('members').select('*').order('created_at', { ascending: false });
-
-    if (error) {
-        listDiv.innerHTML = `<div class="alert alert-danger">載入會員失敗: ${error.message}</div>`;
-        return;
+        memberModal.show();
     }
 
-    if (!data || data.length === 0) {
-        listDiv.innerHTML = `<div class="text-center p-5 bg-white rounded border"><p class="text-muted">尚無會員資料</p></div>`;
-        return;
+    async function submitMember() {
+        const name = document.getElementById('m-name').value.trim();
+        const gender = document.getElementById('m-gender').value;
+        const birth_date = document.getElementById('m-birth_date').value;
+        const phone = document.getElementById('m-phone').value.trim();
+        const email = document.getElementById('m-email').value.trim();
+        const category = document.getElementById('m-category').value;
+        const group_number = document.getElementById('m-group_number').value;
+        const address = document.getElementById('m-address').value.trim();
+        const is_student = document.getElementById('m-is_student').checked;
+        const entrance_fee_paid = document.getElementById('m-entrance_fee_paid').checked;
+
+        if (!name || !birth_date || !email) return alert("請填寫姓名、出生年月日與 Email");
+        if (name === '鐘天穎') return alert("鐘天穎與機掰人不得入會");
+
+        const birth = new Date(birth_date);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        if ((today.getMonth() - birth.getMonth() < 0) || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
+        if (age < 18) return alert(`該成員未成年（目前 ${age} 歲），需滿 18 歲方可加入。`);
+
+        const btn = document.getElementById('memberSaveBtn');
+        btn.disabled = true;
+
+        try {
+            const { data: existingMember, error: checkError } = await _supabase
+                .from('members')
+                .select('id')
+                .eq('email', email)
+                .neq('id', currentMemberId ? currentMemberId : '00000000-0000-0000-0000-000000000000')
+                .maybeSingle();
+
+            if (checkError) throw checkError;
+            if (existingMember) {
+                btn.disabled = false;
+                return alert("此 Email 已經被其他會員註冊過");
+            }
+
+            const payload = {
+                name, gender: gender || null, birth_date, phone: phone || null,
+                email, address: address || null, category,
+                group_number: group_number ? parseInt(group_number) : null,
+                is_student, entrance_fee_paid
+            };
+
+            if (currentMemberId) {
+                const { error } = await _supabase.from('members').update(payload).eq('id', currentMemberId);
+                if (error) throw error;
+                alert("會員資料更新成功！");
+            } else {
+                const { error } = await _supabase.from('members').insert([payload]);
+                if (error) throw error;
+                alert("會員新增成功！");
+            }
+            memberModal.hide(); loadMembers();
+        } catch (error) {
+            alert("系統錯誤：" + error.message);
+        } finally {
+            btn.disabled = false; btn.innerText = currentMemberId ? "更新會員" : "儲存會員";
+        }
     }
 
-    // 建立會員表格
-    let html = `
-        <div class="table-responsive bg-white rounded shadow-sm border p-3">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>姓名</th>
-                        <th>類別</th>
-                        <th>組別</th>
-                        <th>入會費</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>`;
+    async function loadMembers() {
+        const listDiv = document.getElementById('members-list');
+        if (!listDiv) return;
+        listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
 
-    data.forEach(m => {
-        // 修正處：移除後方的[cite: 1] 標籤，這是導致語法錯誤的主因
-        const catMap = { 'Applicant': '申請中', 'General': '一般', 'Permanent': '永久', 'Student': '學生' };
+        const { data, error } = await _supabase.from('members').select('*').order('created_at', { ascending: false });
+        if (error) { listDiv.innerHTML = `<div class="alert alert-danger">載入失敗: ${error.message}</div>`; return; }
+        if (!data || data.length === 0) { listDiv.innerHTML = `<div class="text-center p-5 bg-white rounded border"><p class="text-muted">尚無會員資料</p></div>`; return; }
 
-        html += `
-            <tr>
-                <td><strong>${m.name}</strong></td>
-                <td><span class="badge bg-light text-dark border">${catMap[m.category] || m.category}</span></td>
-                <td>${m.group_number ? `第 ${m.group_number} 組` : '-'}</td>
-                <td>${m.entrance_fee_paid ? '<span class="text-success">已繳</span>' : '<span class="text-danger">未繳</span>'}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></button>
-                </td>
-            </tr>`;
-    });
+        let html = `
+            <div class="table-responsive bg-white rounded shadow-sm border p-3">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>聯絡電話</th>
+                            <th>類別 / 身份</th>
+                            <th>組別</th>
+                            <th>入會費</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
 
-    html += `</tbody></table></div>`;
-    listDiv.innerHTML = html;
-}
+        data.forEach(m => {
+            const catMap = { 'Applicant': '申請中', 'General': '一般', 'Permanent': '永久' };
+            let categoryDisplay = catMap[m.category] || m.category;
+            if (m.is_student) categoryDisplay += ` <span class="badge bg-info text-dark">學生</span>`;
+
+            const genderMap = { 'Male': ' (男)', 'Female': ' (女)', 'Other': ' (其他)' };
+            const groupDisplay = m.group_number ? `第 ${m.group_number} 組` : '-';
+            const feeStatus = m.entrance_fee_paid ? '<span class="text-success">已繳</span>' : '<span class="text-danger">未繳</span>';
+
+            const safeName = m.name.replace(/'/g, "\\'").replace(/\n/g, "");
+            const memberJson = JSON.stringify(m).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+            html += `
+                <tr>
+                    <td><strong>${m.name}</strong><small class="text-muted">${genderMap[m.gender] || ''}</small></td>
+                    <td>${m.phone || '-'}</td>
+                    <td><span class="badge bg-light text-dark border">${categoryDisplay}</span></td>
+                    <td>${groupDisplay}</td>
+                    <td>${feeStatus}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditMemberModal('${memberJson}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="handleMemberDelete('${m.id}', '${safeName}')"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+        html += `</tbody></table></div>`; listDiv.innerHTML = html;
+    }
+
+    async function handleMemberDelete(id, name) {
+        if (!confirm(`確定要刪除會員「${name}」的所有資料嗎？\n此動作將無法復原。`)) return;
+        try {
+            const { error } = await _supabase.from('members').delete().eq('id', id);
+            if (error) throw error;
+            alert("會員資料已成功刪除"); loadMembers();
+        } catch (error) { alert("刪除失敗：" + error.message); }
+    }
+
+
+    /* ==========================================
+       3. 活動管理 邏輯區塊
+       ========================================== */
+    function openActivityModal() {
+        currentActivityId = null;
+        document.getElementById('activityForm').reset();
+        document.getElementById('a-activity_date').value = new Date().toISOString().split('T')[0];
+        document.querySelector('#activityModal .modal-title').innerHTML = '<i class="bi bi-calendar-plus me-2"></i>新增活動賽事';
+        document.getElementById('activitySaveBtn').innerText = "儲存活動";
+        activityModal.show();
+    }
+
+    function openEditActivityModal(activityStr) {
+        const activity = JSON.parse(activityStr);
+        currentActivityId = activity.id;
+
+        document.querySelector('#activityModal .modal-title').innerHTML = '<i class="bi bi-pencil-square me-2"></i>修改活動賽事';
+        document.getElementById('activitySaveBtn').innerText = "更新活動";
+
+        document.getElementById('a-title').value = activity.title || '';
+        document.getElementById('a-activity_date').value = activity.activity_date || '';
+        document.getElementById('a-location').value = activity.location || '';
+        document.getElementById('a-activity_type').value = activity.activity_type || '團練';
+        document.getElementById('a-is_locked').checked = activity.is_locked || false;
+
+        activityModal.show();
+    }
+
+    async function submitActivity() {
+        const title = document.getElementById('a-title').value.trim();
+        const activity_date = document.getElementById('a-activity_date').value;
+        const location = document.getElementById('a-location').value.trim();
+        const activity_type = document.getElementById('a-activity_type').value;
+        const is_locked = document.getElementById('a-is_locked').checked;
+
+        if (!title) return alert("請填寫活動名稱");
+
+        const btn = document.getElementById('activitySaveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 處理中...';
+
+        const payload = {
+            title,
+            activity_date: activity_date || null,
+            location: location || null,
+            activity_type: activity_type || null,
+            is_locked
+        };
+
+        try {
+            if (currentActivityId) {
+                const { error } = await _supabase.from('activities').update(payload).eq('id', currentActivityId);
+                if (error) throw error;
+                alert("活動賽事更新成功！");
+            } else {
+                const { error } = await _supabase.from('activities').insert([payload]);
+                if (error) throw error;
+                alert("活動賽事新增成功！");
+            }
+            activityModal.hide();
+            loadActivities();
+        } catch (error) {
+            alert("系統錯誤：" + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = currentActivityId ? "更新活動" : "儲存活動";
+        }
+    }
+
+    async function loadActivities() {
+        const listDiv = document.getElementById('activities-list');
+        if (!listDiv) return;
+        listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
+
+        const { data, error } = await _supabase.from('activities').select('*').order('activity_date', { ascending: false });
+
+        if (error) {
+            listDiv.innerHTML = `<div class="alert alert-danger">載入活動失敗: ${error.message}</div>`;
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            listDiv.innerHTML = `<div class="text-center p-5 bg-white rounded border"><p class="text-muted">尚無活動賽事資料</p></div>`;
+            return;
+        }
+
+        let html = `
+            <div class="table-responsive bg-white rounded shadow-sm border p-3">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>活動賽事名稱</th>
+                            <th>活動日期</th>
+                            <th>活動地點</th>
+                            <th>類型</th>
+                            <th>狀態</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        data.forEach(act => {
+            const dateDisplay = act.activity_date ? new Date(act.activity_date).toLocaleDateString('zh-TW', {year: 'numeric', month: '2-digit', day: '2-digit'}) : '-';
+            const statusDisplay = act.is_locked
+                ? '<span class="badge bg-danger"><i class="bi bi-lock-fill me-1"></i>已鎖定</span>'
+                : '<span class="badge bg-success"><i class="bi bi-unlock-fill me-1"></i>報名中</span>';
+
+            const safeTitle = act.title.replace(/'/g, "\\'").replace(/\n/g, "");
+            const activityJson = JSON.stringify(act).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+            html += `
+                <tr>
+                    <td><strong>${act.title}</strong></td>
+                    <td><small class="text-muted"><i class="bi bi-calendar3 me-1"></i>${dateDisplay}</small></td>
+                    <td>${act.location || '<span class="text-muted">-</span>'}</td>
+                    <td><span class="badge bg-light text-dark border">${act.activity_type || '未分類'}</span></td>
+                    <td>${statusDisplay}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditActivityModal('${activityJson}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="handleActivityDelete('${act.id}', '${safeTitle}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        listDiv.innerHTML = html;
+    }
+
+    async function handleActivityDelete(id, title) {
+        if (!confirm(`確定要刪除活動「${title}」嗎？\n此動作將無法復原。`)) return;
+
+        try {
+            const { error } = await _supabase.from('activities').delete().eq('id', id);
+            if (error) throw error;
+            alert("活動資料已成功刪除");
+            loadActivities();
+        } catch (error) {
+            alert("刪除失敗：" + error.message);
+        }
+    }
 </script>
 </body>
 </html>
