@@ -12,12 +12,9 @@
         :root { --primary-color: #0d6efd; }
         body { background-color: #f8f9fa; font-family: "Microsoft JhengHei", sans-serif; }
 
-        /* 登入區塊置中 */
         #login-section { min-height: 80vh; display: flex; align-items: center; }
+        .container { max-width: 950px; }
 
-        .container { max-width: 850px; }
-
-        /* 公告卡片樣式 */
         .post-card {
             transition: transform 0.2s, box-shadow 0.2s;
             border: none;
@@ -35,7 +32,6 @@
         .bg-rules { background-color: #fff3cd; color: #664d03; }
 
         #admin-content { display: none; margin-top: 40px; margin-bottom: 60px; }
-        .loading-spinner { display: none; }
     </style>
 </head>
 <body>
@@ -81,6 +77,11 @@
                     <i class="bi bi-calendar-event me-1"></i> 活動管理
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-danger" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance-panel" type="button">
+                    <i class="bi bi-check2-square me-1"></i> 出席點名紀錄
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content" id="adminTabContent">
@@ -124,6 +125,31 @@
                     </div>
                 </div>
                 <div id="activities-list"></div>
+            </div>
+
+            <div class="tab-pane fade" id="attendance-panel" role="tabpanel">
+                <div class="card shadow-sm border-0 p-4 bg-white mb-4">
+                    <h4 class="fw-bold text-dark mb-3"><i class="bi bi-clipboard-check me-2 text-danger"></i>活動出席點名系統</h4>
+                    <div class="row g-3 align-items-center mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">第一步：請選取目標活動</label>
+                            <select id="attendance-activity-select" class="form-select form-select-lg border-primary" onchange="loadAttendanceSheet()">
+                                <option value="">-- 請選擇活動 --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 text-md-end mt-4">
+                            <button id="save-attendance-btn" onclick="submitAttendanceSheet()" class="btn btn-danger btn-lg px-4 shadow-sm" disabled>
+                                <i class="bi bi-cloud-upload me-1"></i> 儲存本次點名紀錄
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div id="attendance-sheet-container">
+                        <p class="text-muted text-center py-5">請先於上方選擇一項活動以載入簽到名單。</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -307,39 +333,22 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let editModal;
-    let memberModal;
-    let activityModal;
+    let editModal, memberModal, activityModal;
     let currentMemberId = null;
     let currentActivityId = null;
 
-    const catNames = {
-        'general': '一般公告',
-        'event': '活動訊息',
-        'member': '會員專區',
-        'rules': '規章制度'
-    };
+    const catNames = { 'general': '一般公告', 'event': '活動訊息', 'member': '會員專區', 'rules': '規章制度' };
 
     document.addEventListener('DOMContentLoaded', () => {
-        // 由於 Bootstrap 已經在 head 優先載入，此處可以安全初始化
-        const editEl = document.getElementById('editModal');
-        if (editEl) editModal = new bootstrap.Modal(editEl);
+        editModal = new bootstrap.Modal(document.getElementById('editModal'));
+        memberModal = new bootstrap.Modal(document.getElementById('memberModal'));
+        activityModal = new bootstrap.Modal(document.getElementById('activityModal'));
 
-        const memberEl = document.getElementById('memberModal');
-        if (memberEl) memberModal = new bootstrap.Modal(memberEl);
+        document.getElementById('members-tab').addEventListener('shown.bs.tab', () => loadMembers());
+        document.getElementById('activities-tab').addEventListener('shown.bs.tab', () => loadActivities());
 
-        const activityEl = document.getElementById('activityModal');
-        if (activityEl) activityModal = new bootstrap.Modal(activityEl);
-
-        const memberTabEl = document.getElementById('members-tab');
-        if (memberTabEl) {
-            memberTabEl.addEventListener('shown.bs.tab', () => { loadMembers(); });
-        }
-
-        const activityTabEl = document.getElementById('activities-tab');
-        if (activityTabEl) {
-            activityTabEl.addEventListener('shown.bs.tab', () => { loadActivities(); });
-        }
+        // 切換到點名 Tab 時，初始化活動下拉選單
+        document.getElementById('attendance-tab').addEventListener('shown.bs.tab', () => loadAttendanceActivitiesDropdown());
 
         checkSession();
     });
@@ -353,8 +362,7 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const { error } = await _supabase.auth.signInWithPassword({ email, password });
-        if (error) alert("登入失敗: " + error.message);
-        else showAdmin();
+        if (error) alert("登入失敗: " + error.message); else showAdmin();
     }
 
     function showAdmin() {
@@ -363,32 +371,24 @@
         loadPosts();
     }
 
-    async function handleLogout() {
-        await _supabase.auth.signOut();
-        location.reload();
-    }
+    async function handleLogout() { await _supabase.auth.signOut(); location.reload(); }
 
     /* ==========================================
-       1. 公告管理 邏輯區塊
+       1. 公告管理 邏輯
        ========================================== */
     async function loadPosts() {
         const listDiv = document.getElementById('posts-list');
         listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
-
         const { data, error } = await _supabase.from('posts').select('*').order('created_at', { ascending: false });
         if (error) { listDiv.innerHTML = `<div class="alert alert-danger">載入失敗: ${error.message}</div>`; return; }
-        if (data.length === 0) { listDiv.innerHTML = `<div class="text-center p-5 bg-white rounded shadow-sm"><p class="text-muted">目前沒有任何公告</p></div>`; return; }
 
         listDiv.innerHTML = '';
         data.forEach(post => {
-            const catClass = `bg-${post.category || 'general'}`;
-            const catName = catNames[post.category] || '未分類';
-
             listDiv.innerHTML += `
                 <div class="card post-card shadow-sm p-3 mb-3 bg-white">
                     <div class="row align-items-center">
                         <div class="col">
-                            <span class="category-badge ${catClass} mb-2 d-inline-block">${catName}</span>
+                            <span class="category-badge bg-${post.category || 'general'} mb-2 d-inline-block">${catNames[post.category] || '未分類'}</span>
                             <h5 class="mb-1 fw-bold text-dark">${post.title}</h5>
                             <small class="text-muted"><i class="bi bi-clock me-1"></i>${new Date(post.created_at).toLocaleDateString()}</small>
                         </div>
@@ -402,71 +402,40 @@
     }
 
     function openAddModal() {
-        document.getElementById('modalTitle').innerText = "新增公告";
-        document.getElementById('saveBtn').innerText = "立即發佈";
-        document.getElementById('edit-id').value = "";
-        document.getElementById('edit-title').value = "";
-        document.getElementById('edit-text').value = "";
-        document.getElementById('edit-category').value = "general";
+        document.getElementById('modalTitle').innerText = "新增公告"; document.getElementById('saveBtn').innerText = "立即發佈";
+        document.getElementById('edit-id').value = ""; document.getElementById('edit-title').value = "";
+        document.getElementById('edit-text').value = ""; document.getElementById('edit-category').value = "general";
         editModal.show();
     }
 
     function openEditModal(id, title, content, category) {
-        document.getElementById('modalTitle').innerText = "編輯公告";
-        document.getElementById('saveBtn').innerText = "儲存修改";
-        document.getElementById('edit-id').value = id;
-        document.getElementById('edit-title').value = title;
-        document.getElementById('edit-text').value = content;
-        document.getElementById('edit-category').value = category || "general";
+        document.getElementById('modalTitle').innerText = "編輯公告"; document.getElementById('saveBtn').innerText = "儲存修改";
+        document.getElementById('edit-id').value = id; document.getElementById('edit-title').value = title;
+        document.getElementById('edit-text').value = content; document.getElementById('edit-category').value = category || "general";
         editModal.show();
     }
 
     async function submitSave() {
-        const id = document.getElementById('edit-id').value;
-        const title = document.getElementById('edit-title').value;
-        const content = document.getElementById('edit-text').value;
-        const category = document.getElementById('edit-category').value;
-
+        const id = document.getElementById('edit-id').value; const title = document.getElementById('edit-title').value;
+        const content = document.getElementById('edit-text').value; const category = document.getElementById('edit-category').value;
         if (!title || !content) return alert("請填寫標題與內容");
-
-        const btn = document.getElementById('saveBtn');
-        btn.disabled = true;
         const payload = { title, content, category };
-        let error;
-
-        if (id) { error = (await _supabase.from('posts').update(payload).eq('id', id)).error; }
-        else { error = (await _supabase.from('posts').insert([payload])).error; }
-
-        if (error) alert("操作失敗：" + error.message);
-        else { editModal.hide(); loadPosts(); }
-        btn.disabled = false; btn.innerText = "儲存";
+        let { error } = id ? await _supabase.from('posts').update(payload).eq('id', id) : await _supabase.from('posts').insert([payload]);
+        if (error) alert("操作失敗：" + error.message); else { editModal.hide(); loadPosts(); }
     }
 
     async function handleDelete(id) {
         if (!confirm("確定要刪除這則公告嗎？")) return;
-        const { error } = await _supabase.from('posts').delete().eq('id', id);
-        if (error) alert("刪除失敗：" + error.message); else loadPosts();
+        await _supabase.from('posts').delete().eq('id', id); loadPosts();
     }
-
 
     /* ==========================================
-       2. 會員管理 邏輯區塊
+       2. 會員管理 邏輯
        ========================================== */
-    function openMemberModal() {
-        currentMemberId = null;
-        document.getElementById('memberForm').reset();
-        document.querySelector('#memberModal .modal-title').innerHTML = '<i class="bi bi-person-plus me-2"></i>新增會員資料';
-        document.getElementById('memberSaveBtn').innerText = "儲存會員";
-        memberModal.show();
-    }
+    function openMemberModal() { currentMemberId = null; document.getElementById('memberForm').reset(); memberModal.show(); }
 
     function openEditMemberModal(memberStr) {
-        const member = JSON.parse(memberStr);
-        currentMemberId = member.id;
-
-        document.querySelector('#memberModal .modal-title').innerHTML = '<i class="bi bi-pencil-square me-2"></i>修改會員資料';
-        document.getElementById('memberSaveBtn').innerText = "更新會員";
-
+        const member = JSON.parse(memberStr); currentMemberId = member.id;
         document.getElementById('m-name').value = member.name || '';
         document.getElementById('m-gender').value = member.gender || '';
         document.getElementById('m-birth_date').value = member.birth_date || '';
@@ -475,279 +444,269 @@
         document.getElementById('m-category').value = member.category || 'Applicant';
         document.getElementById('m-group_number').value = member.group_number || '';
         document.getElementById('m-address').value = member.address || '';
-
         document.getElementById('m-is_student').checked = member.is_student || false;
         document.getElementById('m-entrance_fee_paid').checked = member.entrance_fee_paid || false;
-
         memberModal.show();
     }
 
     async function submitMember() {
         const name = document.getElementById('m-name').value.trim();
-        const gender = document.getElementById('m-gender').value;
-        const birth_date = document.getElementById('m-birth_date').value;
-        const phone = document.getElementById('m-phone').value.trim();
         const email = document.getElementById('m-email').value.trim();
-        const category = document.getElementById('m-category').value;
-        const group_number = document.getElementById('m-group_number').value;
-        const address = document.getElementById('m-address').value.trim();
-        const is_student = document.getElementById('m-is_student').checked;
-        const entrance_fee_paid = document.getElementById('m-entrance_fee_paid').checked;
-
+        const birth_date = document.getElementById('m-birth_date').value;
         if (!name || !birth_date || !email) return alert("請填寫姓名、出生年月日與 Email");
-        if (name === '鐘天穎') return alert("鐘天穎與機掰人不得入會");
+        if (name === '鐘天穎') return alert("特定黑名單人員不得入會");
 
-        const birth = new Date(birth_date);
-        const today = new Date();
-        let age = today.getFullYear() - birth.getFullYear();
-        if ((today.getMonth() - birth.getMonth() < 0) || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
-        if (age < 18) return alert(`該成員未成年（目前 ${age} 歲），需滿 18 歲方可加入。`);
+        const payload = {
+            name, email, birth_date,
+            gender: document.getElementById('m-gender').value || null,
+            phone: document.getElementById('m-phone').value.trim() || null,
+            category: document.getElementById('m-category').value,
+            group_number: document.getElementById('m-group_number').value ? parseInt(document.getElementById('m-group_number').value) : null,
+            address: document.getElementById('m-address').value.trim() || null,
+            is_student: document.getElementById('m-is_student').checked,
+            entrance_fee_paid: document.getElementById('m-entrance_fee_paid').checked
+        };
 
-        const btn = document.getElementById('memberSaveBtn');
-        btn.disabled = true;
-
-        try {
-            const { data: existingMember, error: checkError } = await _supabase
-                .from('members')
-                .select('id')
-                .eq('email', email)
-                .neq('id', currentMemberId ? currentMemberId : '00000000-0000-0000-0000-000000000000')
-                .maybeSingle();
-
-            if (checkError) throw checkError;
-            if (existingMember) {
-                btn.disabled = false;
-                return alert("此 Email 已經被其他會員註冊過");
-            }
-
-            const payload = {
-                name, gender: gender || null, birth_date, phone: phone || null,
-                email, address: address || null, category,
-                group_number: group_number ? parseInt(group_number) : null,
-                is_student, entrance_fee_paid
-            };
-
-            if (currentMemberId) {
-                const { error } = await _supabase.from('members').update(payload).eq('id', currentMemberId);
-                if (error) throw error;
-                alert("會員資料更新成功！");
-            } else {
-                const { error } = await _supabase.from('members').insert([payload]);
-                if (error) throw error;
-                alert("會員新增成功！");
-            }
-            memberModal.hide(); loadMembers();
-        } catch (error) {
-            alert("系統錯誤：" + error.message);
-        } finally {
-            btn.disabled = false; btn.innerText = currentMemberId ? "更新會員" : "儲存會員";
-        }
+        let { error } = currentMemberId ? await _supabase.from('members').update(payload).eq('id', currentMemberId) : await _supabase.from('members').insert([payload]);
+        if (error) alert("錯誤: " + error.message); else { memberModal.hide(); loadMembers(); }
     }
 
     async function loadMembers() {
         const listDiv = document.getElementById('members-list');
-        if (!listDiv) return;
-        listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
-
         const { data, error } = await _supabase.from('members').select('*').order('created_at', { ascending: false });
-        if (error) { listDiv.innerHTML = `<div class="alert alert-danger">載入失敗: ${error.message}</div>`; return; }
-        if (!data || data.length === 0) { listDiv.innerHTML = `<div class="text-center p-5 bg-white rounded border"><p class="text-muted">尚無會員資料</p></div>`; return; }
+        if (error) return;
 
-        let html = `
-            <div class="table-responsive bg-white rounded shadow-sm border p-3">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>姓名</th>
-                            <th>聯絡電話</th>
-                            <th>類別 / 身份</th>
-                            <th>組別</th>
-                            <th>入會費</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
+        let html = `<div class="table-responsive bg-white rounded shadow-sm border p-3"><table class="table table-hover align-middle"><thead><tr><th>姓名</th><th>聯絡電話</th><th>類別</th><th>組別</th><th>操作</th></tr></thead><tbody>`;
         data.forEach(m => {
-            const catMap = { 'Applicant': '申請中', 'General': '一般', 'Permanent': '永久' };
-            let categoryDisplay = catMap[m.category] || m.category;
-            if (m.is_student) categoryDisplay += ` <span class="badge bg-info text-dark">學生</span>`;
-
-            const genderMap = { 'Male': ' (男)', 'Female': ' (女)', 'Other': ' (其他)' };
-            const groupDisplay = m.group_number ? `第 ${m.group_number} 組` : '-';
-            const feeStatus = m.entrance_fee_paid ? '<span class="text-success">已繳</span>' : '<span class="text-danger">未繳</span>';
-
-            const safeName = m.name.replace(/'/g, "\\'").replace(/\n/g, "");
             const memberJson = JSON.stringify(m).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-
-            html += `
-                <tr>
-                    <td><strong>${m.name}</strong><small class="text-muted">${genderMap[m.gender] || ''}</small></td>
-                    <td>${m.phone || '-'}</td>
-                    <td><span class="badge bg-light text-dark border">${categoryDisplay}</span></td>
-                    <td>${groupDisplay}</td>
-                    <td>${feeStatus}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditMemberModal('${memberJson}')"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="handleMemberDelete('${m.id}', '${safeName}')"><i class="bi bi-trash"></i></button>
-                    </td>
-                </tr>`;
+            html += `<tr><td><strong>${m.name}</strong></td><td>${m.phone || '-'}</td><td>${m.category}</td><td>${m.group_number ? m.group_number+'組' : '-'}</td><td><button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditMemberModal('${memberJson}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="handleMemberDelete('${m.id}', '${m.name}')"><i class="bi bi-trash"></i></button></td></tr>`;
         });
-        html += `</tbody></table></div>`; listDiv.innerHTML = html;
+        listDiv.innerHTML = html + `</tbody></table></div>`;
     }
 
     async function handleMemberDelete(id, name) {
-        if (!confirm(`確定要刪除會員「${name}」的所有資料嗎？\n此動作將無法復原。`)) return;
-        try {
-            const { error } = await _supabase.from('members').delete().eq('id', id);
-            if (error) throw error;
-            alert("會員資料已成功刪除"); loadMembers();
-        } catch (error) { alert("刪除失敗：" + error.message); }
+        if (!confirm(`確定要刪除會員「${name}」？`)) return;
+        await _supabase.from('members').delete().eq('id', id); loadMembers();
     }
-
 
     /* ==========================================
-       3. 活動管理 邏輯區塊
+       3. 活動管理 邏輯
        ========================================== */
-    function openActivityModal() {
-        currentActivityId = null;
-        document.getElementById('activityForm').reset();
-        document.getElementById('a-activity_date').value = new Date().toISOString().split('T')[0];
-        document.querySelector('#activityModal .modal-title').innerHTML = '<i class="bi bi-calendar-plus me-2"></i>新增活動賽事';
-        document.getElementById('activitySaveBtn').innerText = "儲存活動";
-        activityModal.show();
-    }
+    function openActivityModal() { currentActivityId = null; document.getElementById('activityForm').reset(); activityModal.show(); }
 
     function openEditActivityModal(activityStr) {
-        const activity = JSON.parse(activityStr);
-        currentActivityId = activity.id;
-
-        document.querySelector('#activityModal .modal-title').innerHTML = '<i class="bi bi-pencil-square me-2"></i>修改活動賽事';
-        document.getElementById('activitySaveBtn').innerText = "更新活動";
-
-        document.getElementById('a-title').value = activity.title || '';
-        document.getElementById('a-activity_date').value = activity.activity_date || '';
-        document.getElementById('a-location').value = activity.location || '';
-        document.getElementById('a-activity_type').value = activity.activity_type || '團練';
-        document.getElementById('a-is_locked').checked = activity.is_locked || false;
-
+        const act = JSON.parse(activityStr); currentActivityId = act.id;
+        document.getElementById('a-title').value = act.title;
+        document.getElementById('a-activity_date').value = act.activity_date;
+        document.getElementById('a-location').value = act.location || '';
+        document.getElementById('a-activity_type').value = act.activity_type || '團練';
+        document.getElementById('a-is_locked').checked = act.is_locked || false;
         activityModal.show();
     }
 
     async function submitActivity() {
         const title = document.getElementById('a-title').value.trim();
-        const activity_date = document.getElementById('a-activity_date').value;
-        const location = document.getElementById('a-location').value.trim();
-        const activity_type = document.getElementById('a-activity_type').value;
-        const is_locked = document.getElementById('a-is_locked').checked;
-
-        if (!title) return alert("請填寫活動名稱");
-
-        const btn = document.getElementById('activitySaveBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 處理中...';
-
         const payload = {
-            title,
-            activity_date: activity_date || null,
-            location: location || null,
-            activity_type: activity_type || null,
-            is_locked
+            title, activity_date: document.getElementById('a-activity_date').value,
+            location: document.getElementById('a-location').value.trim() || null,
+            activity_type: document.getElementById('a-activity_type').value,
+            is_locked: document.getElementById('a-is_locked').checked
         };
-
-        try {
-            if (currentActivityId) {
-                const { error } = await _supabase.from('activities').update(payload).eq('id', currentActivityId);
-                if (error) throw error;
-                alert("活動賽事更新成功！");
-            } else {
-                const { error } = await _supabase.from('activities').insert([payload]);
-                if (error) throw error;
-                alert("活動賽事新增成功！");
-            }
-            activityModal.hide();
-            loadActivities();
-        } catch (error) {
-            alert("系統錯誤：" + error.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = currentActivityId ? "更新活動" : "儲存活動";
-        }
+        let { error } = currentActivityId ? await _supabase.from('activities').update(payload).eq('id', currentActivityId) : await _supabase.from('activities').insert([payload]);
+        if (error) alert("錯誤: " + error.message); else { activityModal.hide(); loadActivities(); }
     }
 
     async function loadActivities() {
         const listDiv = document.getElementById('activities-list');
-        if (!listDiv) return;
-        listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
-
         const { data, error } = await _supabase.from('activities').select('*').order('activity_date', { ascending: false });
+        if (error) return;
 
-        if (error) {
-            listDiv.innerHTML = `<div class="alert alert-danger">載入活動失敗: ${error.message}</div>`;
-            return;
-        }
-
-        if (!data || data.length === 0) {
-            listDiv.innerHTML = `<div class="text-center p-5 bg-white rounded border"><p class="text-muted">尚無活動賽事資料</p></div>`;
-            return;
-        }
-
-        let html = `
-            <div class="table-responsive bg-white rounded shadow-sm border p-3">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>活動賽事名稱</th>
-                            <th>活動日期</th>
-                            <th>活動地點</th>
-                            <th>類型</th>
-                            <th>狀態</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
+        let html = `<div class="table-responsive bg-white rounded shadow-sm border p-3"><table class="table table-hover align-middle"><thead><tr><th>活動名稱</th><th>日期</th><th>地點</th><th>類型</th><th>操作</th></tr></thead><tbody>`;
         data.forEach(act => {
-            const dateDisplay = act.activity_date ? new Date(act.activity_date).toLocaleDateString('zh-TW', {year: 'numeric', month: '2-digit', day: '2-digit'}) : '-';
-            const statusDisplay = act.is_locked
-                ? '<span class="badge bg-danger"><i class="bi bi-lock-fill me-1"></i>已鎖定</span>'
-                : '<span class="badge bg-success"><i class="bi bi-unlock-fill me-1"></i>報名中</span>';
-
-            const safeTitle = act.title.replace(/'/g, "\\'").replace(/\n/g, "");
-            const activityJson = JSON.stringify(act).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-
-            html += `
-                <tr>
-                    <td><strong>${act.title}</strong></td>
-                    <td><small class="text-muted"><i class="bi bi-calendar3 me-1"></i>${dateDisplay}</small></td>
-                    <td>${act.location || '<span class="text-muted">-</span>'}</td>
-                    <td><span class="badge bg-light text-dark border">${act.activity_type || '未分類'}</span></td>
-                    <td>${statusDisplay}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditActivityModal('${activityJson}')">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="handleActivityDelete('${act.id}', '${safeTitle}')">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                </tr>`;
+            const actJson = JSON.stringify(act).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            html += `<tr><td><strong>${act.title}</strong></td><td>${act.activity_date || '-'}</td><td>${act.location || '-'}</td><td>${act.activity_type}</td><td><button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditActivityModal('${actJson}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="handleActivityDelete('${act.id}', '${act.title}')"><i class="bi bi-trash"></i></button></td></tr>`;
         });
-
-        html += `</tbody></table></div>`;
-        listDiv.innerHTML = html;
+        listDiv.innerHTML = html + `</tbody></table></div>`;
     }
 
     async function handleActivityDelete(id, title) {
-        if (!confirm(`確定要刪除活動「${title}」嗎？\n此動作將無法復原。`)) return;
+        if (!confirm(`確定要刪除「${title}」？`)) return;
+        await _supabase.from('activities').delete().eq('id', id); loadActivities();
+    }
+
+
+    /* ==========================================
+       4. 【全新功能】出席點名紀錄 核心邏輯
+       ========================================== */
+
+    // 載入點名分頁的活動下拉選單
+    async function loadAttendanceActivitiesDropdown() {
+        const select = document.getElementById('attendance-activity-select');
+        select.innerHTML = '<option value="">-- 載入活動中... --</option>';
+
+        const { data: activities, error } = await _supabase
+            .from('activities')
+            .select('id, title, activity_date')
+            .order('activity_date', { ascending: false });
+
+        if (error) { select.innerHTML = '<option value="">載入失敗</option>'; return; }
+
+        select.innerHTML = '<option value="">-- 請選擇活動 --</option>';
+        activities.forEach(act => {
+            const dateStr = act.activity_date ? ` (${act.activity_date})` : '';
+            select.innerHTML += `<option value="${act.id}">${act.title}${dateStr}</option>`;
+        });
+
+        // 重設點名區塊
+        document.getElementById('attendance-sheet-container').innerHTML = '<p class="text-muted text-center py-5">請先於上方選擇一項活動以載入簽到名單。</p>';
+        document.getElementById('save-attendance-btn').disabled = true;
+    }
+
+    // 依選擇的活動，生成專屬的點名表格
+    async function loadAttendanceSheet() {
+        const activityId = document.getElementById('attendance-activity-select').value;
+        const container = document.getElementById('attendance-sheet-container');
+        const saveBtn = document.getElementById('save-attendance-btn');
+
+        if (!activityId) {
+            container.innerHTML = '<p class="text-muted text-center py-5">請先於上方選擇一項活動以載入簽到名單。</p>';
+            saveBtn.disabled = true;
+            return;
+        }
+
+        container.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-danger"></div><p class="mt-2 text-muted">正在對接會員庫與關聯表...</p></div>';
 
         try {
-            const { error } = await _supabase.from('activities').delete().eq('id', id);
-            if (error) throw error;
-            alert("活動資料已成功刪除");
-            loadActivities();
-        } catch (error) {
-            alert("刪除失敗：" + error.message);
+            // 1. 同步抓取全體會員
+            const { data: members, error: mErr } = await _supabase.from('members').select('id, name, group_number, category').order('name');
+            if (mErr) throw mErr;
+
+            // 2. 抓取這場活動現有的出席紀錄
+            const { data: attendanceRecords, error: aErr } = await _supabase.from('attendance').select('member_id, status, notes').eq('activity_id', activityId);
+            if (aErr) throw aErr;
+
+            // 將現有紀錄轉為 Map 結構方便比對
+            const recordMap = new Map();
+            attendanceRecords.forEach(r => recordMap.set(r.member_id, { status: r.status, notes: r.notes || '' }));
+
+            // 3. 渲染點名 UI 表格
+            let html = `
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 15%">會員姓名</th>
+                                <th style="width: 15%">組別 / 身份</th>
+                                <th style="width: 45%">出席狀態登記</th>
+                                <th style="width: 25%">備註說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+            members.forEach(m => {
+                const existing = recordMap.get(m.id) || { status: 'NotRegistered', notes: '' };
+                const currentStatus = existing.status; // 'Registered', 'Attended', 'Absent' 或 自訂 'NotRegistered'
+
+                html += `
+                    <tr class="member-row" data-member-id="${m.id}">
+                        <td><strong class="text-dark">${m.name}</strong></td>
+                        <td>
+                            <span class="badge bg-light text-dark border">${m.group_number ? '第'+m.group_number+'組' : '未編組'}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="status-${m.id}" id="status-nr-${m.id}" value="NotRegistered" ${currentStatus === 'NotRegistered' ? 'checked' : ''}>
+                                    <label class="form-check-label small text-muted" for="status-nr-${m.id}">未參與</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="status-${m.id}" id="status-reg-${m.id}" value="Registered" ${currentStatus === 'Registered' ? 'checked' : ''}>
+                                    <label class="form-check-label small text-primary fw-bold" for="status-reg-${m.id}">已報名</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="status-${m.id}" id="status-att-${m.id}" value="Attended" ${currentStatus === 'Attended' ? 'checked' : ''}>
+                                    <label class="form-check-label small text-success fw-bold" for="status-att-${m.id}">已出席</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="status-${m.id}" id="status-abs-${m.id}" value="Absent" ${currentStatus === 'Absent' ? 'checked' : ''}>
+                                    <label class="form-check-label small text-danger fw-bold" for="status-abs-${m.id}">請假/缺席</label>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <input type="text" id="notes-${m.id}" class="form-control form-control-sm" value="${existing.notes}" placeholder="例：素食、帶眷屬1人">
+                        </td>
+                    </tr>`;
+            });
+
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+            saveBtn.disabled = false;
+
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">加載失敗：${err.message}</div>`;
+        }
+    }
+
+    // 批次儲存點名結果
+    async function submitAttendanceSheet() {
+        const activityId = document.getElementById('attendance-activity-select').value;
+        if (!activityId) return;
+
+        const saveBtn = document.getElementById('save-attendance-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 儲存中...';
+
+        const rows = document.querySelectorAll('.member-row');
+        const upsertData = [];
+        const deleteIds = [];
+
+        rows.forEach(row => {
+            const memberId = row.getAttribute('data-member-id');
+            const selectedRadio = document.querySelector(`input[name="status-${memberId}"]:checked`);
+            const status = selectedRadio ? selectedRadio.value : 'NotRegistered';
+            const notes = document.getElementById(`notes-${memberId}`).value.trim();
+
+            if (status === 'NotRegistered') {
+                // 如果選擇「未參與」，代表該活動與該會員無關係，記錄存在則刪除
+                deleteIds.push(memberId);
+            } else {
+                // 需要寫入或更新紀錄
+                upsertData.push({
+                    activity_id: activityId,
+                    member_id: memberId,
+                    status: status,
+                    notes: notes || null
+                });
+            }
+        });
+
+        try {
+            // 1. 執行刪除 (改選為未參與的成員)
+            if (deleteIds.length > 0) {
+                const { error: delErr } = await _supabase
+                    .from('attendance')
+                    .delete()
+                    .eq('activity_id', activityId)
+                    .in('member_id', deleteIds);
+                if (delErr) throw delErr;
+            }
+
+            // 2. 執行 Upsert (有變更狀態的成員，因為設定了複合唯一限制 unique_member_activity，Supabase 會自動判定更新或新增)
+            if (upsertData.length > 0) {
+                const { error: upErr } = await _supabase
+                    .from('attendance')
+                    .upsert(upsertData, { onConflict: 'member_id,activity_id' });
+                if (upErr) throw upErr;
+            }
+
+            alert('🎉 出席簽到點名紀錄已成功更新至雲端資料庫！');
+            loadAttendanceSheet(); // 重新整理
+        } catch (err) {
+            alert('儲存失敗：' + err.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i> 儲存本次點名紀錄';
         }
     }
 </script>
