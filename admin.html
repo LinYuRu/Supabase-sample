@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root { --primary-color: #0d6efd; }
@@ -98,25 +99,47 @@
                 </div>
                 <div id="posts-list"></div>
             </div>
-
+            
             <div class="tab-pane fade" id="members-panel" role="tabpanel">
                 <div class="row align-items-center mb-4">
                     <div class="col">
                         <h4 class="fw-bold mb-0">會員資料庫</h4>
                     </div>
-                    <div class="col-auto">
-                        <button onclick="openMemberModal()" class="btn btn-primary shadow-sm">
-                            <i class="bi bi-person-plus me-1"></i> 新增會員
-                        </button>
+                    <div class="row align-items-center g-2 mb-3">
+                        <div class="col-auto">
+                            <select id="group-filter" class="form-select shadow-sm" style="min-width: 140px;">
+                                <option value="all">全部組別</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <select id="category-filter" class="form-select shadow-sm" style="min-width: 160px;">
+                                <option value="all">全部類別</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button onclick="openMemberModal()" class="btn btn-primary shadow-sm">
+                                <i class="bi bi-person-plus me-1"></i> 新增會員
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div id="members-list"></div>
             </div>
-
+            
             <div class="tab-pane fade" id="activities-panel" role="tabpanel">
                 <div class="row align-items-center mb-4">
                     <div class="col">
                         <h4 class="fw-bold mb-0">活動賽事管理</h4>
+                    </div>
+                    <div class="col-auto">
+                        <select id="type-filter" class="form-select shadow-sm" style="min-width: 140px;">
+                            <option value="all">全部類型</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <select id="year-filter" class="form-select shadow-sm" style="min-width: 140px;">
+                            <option value="all">全部年份</option>
+                        </select>
                     </div>
                     <div class="col-auto">
                         <button onclick="openActivityModal()" class="btn btn-warning shadow-sm fw-bold text-dark">
@@ -195,7 +218,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="memberModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -214,9 +236,6 @@
                             <label class="form-label fw-bold">性別</label>
                             <select id="m-gender" class="form-select">
                                 <option value="">請選擇性別</option>
-                                <option value="Male">男</option>
-                                <option value="Female">女</option>
-                                <option value="Other">其他</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -233,26 +252,12 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">會員類別</label>
-                            <select id="m-category" class="form-select">
-                                <option value="Applicant">申請中 (新入會)</option>
-                                <option value="Student">學生會員</option>
-                                <option value="General">一般會員</option>
-                                <option value="Permanent">永久會員</option>
-                            </select>
+                            <select id="m-category" class="form-select"></select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">所屬組別</label>
                             <select id="m-group_number" class="form-select">
                                 <option value="">請選擇組別</option>
-                                <option value="1">第 1 組</option>
-                                <option value="2">第 2 組</option>
-                                <option value="3">第 3 組</option>
-                                <option value="4">第 4 組</option>
-                                <option value="5">第 5 組</option>
-                                <option value="6">第 6 組</option>
-                                <option value="7">第 7 組</option>
-                                <option value="8">第 8 組</option>
-                                <option value="9">第 9 組</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -333,6 +338,14 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+	
+	// 會員清單排序全域變數：擴充儲存目前表格的排序狀態 (預設組別升冪)
+	let currentSort = { key: 'group_number', asc: true };
+    // 組別也可以用 Map 維護，方便未來要更改成「A組、B組」或擴充組數
+    const genderMap = new Map([ ['Male', '男'], ['Female', '女'] ]);
+    const categoryMap = new Map([ ['Applicant', '申請中 (新入會)'], ['Student', '學生會員'], ['General', '一般會員'], ['Permanent', '永久會員'] ]);
+    const groupMap = new Map([ ['1', '第 1 組'], ['2', '第 2 組'], ['3', '第 3 組'], ['4', '第 4 組'], ['5', '第 5 組'], ['6', '第 6 組'], ['7', '第 7 組'], ['8', '第 8 組'], ['9', '第 9 組'] ]);
+
     let editModal, memberModal, activityModal;
     let currentMemberId = null;
     let currentActivityId = null;
@@ -352,6 +365,23 @@
 
         checkSession();
     });
+    
+	document.addEventListener('DOMContentLoaded', function() {
+		// 透過 id 抓取輸入框元素
+		const mNameInput = document.getElementById('m-name');
+		
+		// 確保頁面上確實有這個輸入框才綁定事件
+		if (mNameInput) {
+			mNameInput.addEventListener('change', function(event) {
+				// 取得目前輸入框內的最新文字
+				const currentInputValue = event.target.value;
+				
+				if (currentInputValue.includes('天穎')) {
+					alert('雞掰人不得入會！');
+				}
+			});
+		}
+	});
 
     async function checkSession() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -432,107 +462,485 @@
     /* ==========================================
        2. 會員管理 邏輯
        ========================================== */
-    function openMemberModal() { currentMemberId = null; document.getElementById('memberForm').reset(); memberModal.show(); }
+	function openMemberModal() {
+		currentMemberId = null;
+		$('#memberForm')[0].reset(); // 使用 jQuery 選取並轉換為 DOM 元素重設表單
+		memberModal.show();
+	}
+	
+	function openEditMemberModal(memberStr) {
+		const member = JSON.parse(memberStr);
+		currentMemberId = member.id;
+		
+		// 使用 jQuery 的 #id 代替 document.getElementById
+		$('#m-name').val(member.name || '');
+		$('#m-gender').val(member.gender || '');
+		$('#m-birth_date').val(member.birth_date || '');
+		$('#m-phone').val(member.phone || '');
+		$('#m-email').val(member.email || '');
+		$('#m-category').val(member.category || 'Applicant');
+		$('#m-group_number').val(member.group_number || '');
+		$('#m-address').val(member.address || '');
+		$('#m-is_student').prop('checked', member.is_student || false); // 使用 prop 處理 checkbox
+		$('#m-entrance_fee_paid').prop('checked', member.entrance_fee_paid || false);
+		
+		memberModal.show();
+	}
+	
+	async function submitMember() {
+		const name = $('#m-name').val().trim();
+		const email = $('#m-email').val().trim();
+		const birth_date = $('#m-birth_date').val();
+		if (!name || !birth_date || !email) return alert("請填寫姓名、出生年月日與 Email");
+	
+		const payload = {
+			name, email, birth_date,
+			gender: $('#m-gender').val() || null,
+			phone: $('#m-phone').val().trim() || null,
+			category: $('#m-category').val(),
+			group_number: $('#m-group_number').val() ? parseInt($('#m-group_number').val()) : null,
+			address: $('#m-address').val().trim() || null,
+			is_student: $('#m-is_student').prop('checked'),
+			entrance_fee_paid: $('#m-entrance_fee_paid').prop('checked')
+		};
+	
+		let { error } = currentMemberId ?
+			await _supabase.from('members').update(payload).eq('id', currentMemberId) :
+			await _supabase.from('members').insert([payload]);
+			
+		if (error) {
+			alert("錯誤: " + error.message);
+		} else {
+			memberModal.hide();
+			loadMembers();
+		}
+	}
+	
 
-    function openEditMemberModal(memberStr) {
-        const member = JSON.parse(memberStr); currentMemberId = member.id;
-        document.getElementById('m-name').value = member.name || '';
-        document.getElementById('m-gender').value = member.gender || '';
-        document.getElementById('m-birth_date').value = member.birth_date || '';
-        document.getElementById('m-phone').value = member.phone || '';
-        document.getElementById('m-email').value = member.email || '';
-        document.getElementById('m-category').value = member.category || 'Applicant';
-        document.getElementById('m-group_number').value = member.group_number || '';
-        document.getElementById('m-address').value = member.address || '';
-        document.getElementById('m-is_student').checked = member.is_student || false;
-        document.getElementById('m-entrance_fee_paid').checked = member.entrance_fee_paid || false;
-        memberModal.show();
-    }
+	async function loadMembers() {
+		const { data, error } = await _supabase.from('members').select('*');
+		if (error) return;
+	
+		// 1. 核心排序邏輯
+		data.sort((a, b) => {
+			let valA = a[currentSort.key];
+			let valB = b[currentSort.key];
+	
+			if (currentSort.key === 'group_number') {
+				if (valA === null || valA === undefined) return 1;
+				if (valB === null || valB === undefined) return -1;
+				return currentSort.asc ? valA - valB : valB - valA;
+			}
+			
+			if (currentSort.key === 'category') {
+				if (!valA) return 1;
+				if (!valB) return -1;
+				const textA = categoryMap.has(valA) ? categoryMap.get(valA) : valA;
+				const textB = categoryMap.has(valB) ? categoryMap.get(valB) : valB;
+				return currentSort.asc ? textA.localeCompare(textB, 'zh-TW') : textB.localeCompare(textA, 'zh-TW');
+			}
+			return 0;
+		});
+	
+		// 2. 記錄並動態生成【組別過濾選單】
+		const $groupFilter = $('#group-filter');
+		const currentSelectedGroup = $groupFilter.val();
+		const groupsSet = new Set();
+		
+		// 3. 記錄並動態生成【類別過濾選單】
+		const $categoryFilter = $('#category-filter');
+		const currentSelectedCategory = $categoryFilter.val();
+		const categoriesSet = new Set();
+	
+		// 提取現有的不重複組別與類別代碼
+		$.each(data, function(index, m) {
+		if (m.group_number !== null && m.group_number !== undefined) {
+			groupsSet.add(m.group_number);
+		}
+		if (m.category) {
+			categoriesSet.add(m.category);
+		}
+		});
+		
+		// 渲染組別選單
+		const sortedGroups = Array.from(groupsSet).sort((a, b) => a - b);
+		let groupSelectHtml = `<option value="all">全部組別</option>`;
+		$.each(sortedGroups, function(index, g) {
+		const groupText = groupMap.has(String(g)) ? groupMap.get(String(g)) : g + '組';
+		groupSelectHtml += `<option value="${g}">${groupText}</option>`;
+		});
+		groupSelectHtml += `<option value="none">未分組</option>`;
+		$groupFilter.html(groupSelectHtml);
+		if (currentSelectedGroup && $groupFilter.find(`option[value="${currentSelectedGroup}"]`).length > 0) {
+		$groupFilter.val(currentSelectedGroup);
+		}
+	
+		// 渲染類別選單 (依 Map 對應的中文名稱排序，讓介面更好看)
+		const sortedCategories = Array.from(categoriesSet).sort((a, b) => {
+			const textA = categoryMap.get(a) || a;
+			const textB = categoryMap.get(b) || b;
+			return textA.localeCompare(textB, 'zh-TW');
+		});
+		let categorySelectHtml = `<option value="all">全部類別</option>`;
+		$.each(sortedCategories, function(index, c) {
+			const categoryText = categoryMap.has(c) ? categoryMap.get(c) : c;
+			categorySelectHtml += `<option value="${c}">${categoryText}</option>`;
+		});
+		$categoryFilter.html(categorySelectHtml);
+		if (currentSelectedCategory && $categoryFilter.find(`option[value="${currentSelectedCategory}"]`).length > 0) {
+			$categoryFilter.val(currentSelectedCategory);
+		}
+	
+		// 4. 產生標頭排序符號 (▲/▼)
+		const categorySortIcon = currentSort.key === 'category' ? (currentSort.asc ? ' ▲' : ' ▼') : '';
+		const groupSortIcon = currentSort.key === 'group_number' ? (currentSort.asc ? ' ▲' : ' ▼') : '';
+	
+		// 5. 渲染表格結構 (在 tr 埋入 data-group 與 data-category 屬性供 jQuery 過濾)
+		let tableHtml = `
+		<div class="table-responsive bg-white rounded shadow-sm border p-3">
+			<table class="table table-hover align-middle">
+				<thead>
+					<tr>
+					<th>姓名</th>
+					<th>聯絡電話</th>
+					<th class="sort-th text-primary" data-key="category" style="cursor: pointer; user-select: none;">類別<small>${categorySortIcon}</small></th>
+					<th class="sort-th text-primary" data-key="group_number" style="cursor: pointer; user-select: none;">組別<small>${groupSortIcon}</small></th>
+					<th>操作</th>
+					</tr>
+				</thead>
+				<tbody>`;
+				
+		$.each(data, function(index, m) {
+		const memberJson = JSON.stringify(m).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+		const groupAttr = m.group_number ? m.group_number : 'none';
+		const categoryAttr = m.category ? m.category : 'none';
+		
+		const displayCategory = categoryMap.has(m.category) ? categoryMap.get(m.category) : (m.category || '-');
+		
+		let displayGroup = '-';
+		if (m.group_number !== null && m.group_number !== undefined) {
+			displayGroup = groupMap.has(String(m.group_number)) ? groupMap.get(String(m.group_number)) : m.group_number + '組';
+		}
+		
+		tableHtml += `
+			<tr class="member-row" data-group="${groupAttr}" data-category="${categoryAttr}">
+				<td><strong>${m.name}</strong></td>
+				<td>${m.phone || '-'}</td>
+				<td><span class="badge bg-light text-dark border">${displayCategory}</span></td>
+				<td>${displayGroup}</td>
+				<td>
+					<button class="btn btn-sm btn-outline-secondary me-1 edit-member-btn" data-member="${memberJson}">
+					<i class="bi bi-pencil"></i>
+					</button>
+					<button class="btn btn-sm btn-outline-danger delete-member-btn" data-id="${m.id}" data-name="${m.name}">
+					<i class="bi bi-trash"></i>
+					</button>
+				</td>
+			</tr>`;
+		});
+		
+		tableHtml += `</tbody></table></div>`;
+		$('#members-list').html(tableHtml);
+	
+		// 立即執行過濾程序，以維持目前的選取畫面
+		applyMemberFilters();
+	}
+	
+	// 6. 整合的雙選單交叉過濾核心函式
+	function applyMemberFilters() {
+		const selectedGroup = $('#group-filter').val() || 'all';
+		const selectedCategory = $('#category-filter').val() || 'all';
+	
+		$('.member-row').each(function() {
+			const rowGroup = $(this).attr('data-group');
+			const rowCategory = $(this).attr('data-category');
+	
+			// 檢查組別條件 (考慮 'all' 與 'none')
+			const groupMatch = (selectedGroup === 'all' || rowGroup === selectedGroup);
+			// 檢查類別條件
+			const categoryMatch = (selectedCategory === 'all' || rowCategory === selectedCategory);
+	
+			// 必須組別與類別同時符合，才顯示該列
+			if (groupMatch && categoryMatch) {
+				$(this).show();
+			} else {
+				$(this).hide();
+			}
+		});
+	}
+	
+function initFormSelects() {
+    
+    // 渲染【性別】下拉選單 (保留原本 HTML 寫好的第一個預設提示 option)
+    genderMap.forEach((text, value) => {
+        $('#m-gender').append(`<option value="${value}">${text}</option>`);
+    });
 
-    async function submitMember() {
-        const name = document.getElementById('m-name').value.trim();
-        const email = document.getElementById('m-email').value.trim();
-        const birth_date = document.getElementById('m-birth_date').value;
-        if (!name || !birth_date || !email) return alert("請填寫姓名、出生年月日與 Email");
-        if (name === '鐘天穎') return alert("特定黑名單人員不得入會");
+    // 渲染【會員類別】下拉選單 (此選單無提示，直接用 .html() 覆寫)
+    let categoryHtml = '';
+    categoryMap.forEach((text, value) => {
+        categoryHtml += `<option value="${value}">${text}</option>`;
+    });
+    $('#m-category').html(categoryHtml);
 
-        const payload = {
-            name, email, birth_date,
-            gender: document.getElementById('m-gender').value || null,
-            phone: document.getElementById('m-phone').value.trim() || null,
-            category: document.getElementById('m-category').value,
-            group_number: document.getElementById('m-group_number').value ? parseInt(document.getElementById('m-group_number').value) : null,
-            address: document.getElementById('m-address').value.trim() || null,
-            is_student: document.getElementById('m-is_student').checked,
-            entrance_fee_paid: document.getElementById('m-entrance_fee_paid').checked
-        };
+    // 渲染【所屬組別】下拉選單 (保留原本的請選擇提示)
+    groupMap.forEach((text, value) => {
+        $('#m-group_number').append(`<option value="${value}">${text}</option>`);
+    });
+}
 
-        let { error } = currentMemberId ? await _supabase.from('members').update(payload).eq('id', currentMemberId) : await _supabase.from('members').insert([payload]);
-        if (error) alert("錯誤: " + error.message); else { memberModal.hide(); loadMembers(); }
-    }
 
-    async function loadMembers() {
-        const listDiv = document.getElementById('members-list');
-        const { data, error } = await _supabase.from('members').select('*').order('created_at', { ascending: false });
-        if (error) return;
-
-        let html = `<div class="table-responsive bg-white rounded shadow-sm border p-3"><table class="table table-hover align-middle"><thead><tr><th>姓名</th><th>聯絡電話</th><th>類別</th><th>組別</th><th>操作</th></tr></thead><tbody>`;
-        data.forEach(m => {
-            const memberJson = JSON.stringify(m).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-            html += `<tr><td><strong>${m.name}</strong></td><td>${m.phone || '-'}</td><td>${m.category}</td><td>${m.group_number ? m.group_number+'組' : '-'}</td><td><button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditMemberModal('${memberJson}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="handleMemberDelete('${m.id}', '${m.name}')"><i class="bi bi-trash"></i></button></td></tr>`;
-        });
-        listDiv.innerHTML = html + `</tbody></table></div>`;
-    }
-
-    async function handleMemberDelete(id, name) {
-        if (!confirm(`確定要刪除會員「${name}」？`)) return;
-        await _supabase.from('members').delete().eq('id', id); loadMembers();
-    }
+	// 4. jQuery 事件監聽器區塊 (取代原生的 onclick 屬性綁定，更符合 jQuery 規範)
+	$(document).ready(function() {
+	    initFormSelects();
+	    
+	    // 當「組別」或「類別」任一選單改變時，立即連動交叉篩選
+		$(document).on('change', '#group-filter, #category-filter', function() {
+			applyMemberFilters();
+		});
+	
+	 
+		// 監聽點擊表格標頭欄位
+		$(document).on('click', '.sort-th', function() {
+			const clickedKey = $(this).data('key'); // 獲取點擊的是 'category' 還是 'group_number'
+			
+			if (currentSort.key === clickedKey) {
+				// 如果點擊的是同一個欄位，則「反轉」升降冪狀態
+				currentSort.asc = !currentSort.asc;
+			} else {
+				// 如果點擊的是全新欄位，則切換過去並預設為「升冪（由小到大）」
+				currentSort.key = clickedKey;
+				currentSort.asc = true;
+			}
+			
+			// 重新調用載入函式，陣列排序完後會自動同步刷新畫面
+			loadMembers();
+		});
+		
+		// 標頭排序點擊事件
+		$(document).on('click', '.sort-th', function() {
+			const clickedKey = $(this).data('key');
+			if (currentSort.key === clickedKey) {
+				currentSort.asc = !currentSort.asc;
+			} else {
+				currentSort.key = clickedKey;
+				currentSort.asc = true;
+			}
+			loadMembers(); // 重新排序並刷新表格，末端會自動再調用 applyMemberFilters()
+		});
+		
+		// 下拉選單變動篩選事件
+<!--		$(document).on('change', '#group-filter', function() {-->
+<!--			const selectedGroup = $(this).val();-->
+<!--			if (selectedGroup === 'all') {-->
+<!--				$('.member-row').show(); // 顯示全部-->
+<!--			} else {-->
+<!--				$('.member-row').each(function() {-->
+<!--					const rowGroup = $(this).data('group'); // 讀取 HTML5 data-group-->
+<!--					if (rowGroup == selectedGroup) {-->
+<!--						$(this).show();-->
+<!--					} else {-->
+<!--						$(this).hide();-->
+<!--					}-->
+<!--				});-->
+<!--			}-->
+<!--		});-->
+	
+		// 編輯按鈕點擊事件 (從元素 data 屬性傳遞資料)
+		$(document).on('click', '.edit-member-btn', function() {
+			const memberStr = $(this).attr('data-member');
+			openEditMemberModal(memberStr);
+		});
+	
+		// 刪除按鈕點擊事件
+		$(document).on('click', '.delete-member-btn', function() {
+			const id = $(this).attr('data-id');
+			const name = $(this).attr('data-name');
+			handleMemberDelete(id, name);
+		});
+	});
+	
+	async function handleMemberDelete(id, name) {
+		if (!confirm(`確定要刪除會員「${name}」？`)) return;
+		await _supabase.from('members').delete().eq('id', id);
+		loadMembers();
+	}
 
     /* ==========================================
        3. 活動管理 邏輯
        ========================================== */
-    function openActivityModal() { currentActivityId = null; document.getElementById('activityForm').reset(); activityModal.show(); }
-
-    function openEditActivityModal(activityStr) {
-        const act = JSON.parse(activityStr); currentActivityId = act.id;
-        document.getElementById('a-title').value = act.title;
-        document.getElementById('a-activity_date').value = act.activity_date;
-        document.getElementById('a-location').value = act.location || '';
-        document.getElementById('a-activity_type').value = act.activity_type || '團練';
-        document.getElementById('a-is_locked').checked = act.is_locked || false;
-        activityModal.show();
-    }
-
-    async function submitActivity() {
-        const title = document.getElementById('a-title').value.trim();
-        const payload = {
-            title, activity_date: document.getElementById('a-activity_date').value,
-            location: document.getElementById('a-location').value.trim() || null,
-            activity_type: document.getElementById('a-activity_type').value,
-            is_locked: document.getElementById('a-is_locked').checked
-        };
-        let { error } = currentActivityId ? await _supabase.from('activities').update(payload).eq('id', currentActivityId) : await _supabase.from('activities').insert([payload]);
-        if (error) alert("錯誤: " + error.message); else { activityModal.hide(); loadActivities(); }
-    }
-
-    async function loadActivities() {
-        const listDiv = document.getElementById('activities-list');
-        const { data, error } = await _supabase.from('activities').select('*').order('activity_date', { ascending: false });
-        if (error) return;
-
-        let html = `<div class="table-responsive bg-white rounded shadow-sm border p-3"><table class="table table-hover align-middle"><thead><tr><th>活動名稱</th><th>日期</th><th>地點</th><th>類型</th><th>操作</th></tr></thead><tbody>`;
-        data.forEach(act => {
-            const actJson = JSON.stringify(act).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-            html += `<tr><td><strong>${act.title}</strong></td><td>${act.activity_date || '-'}</td><td>${act.location || '-'}</td><td>${act.activity_type}</td><td><button class="btn btn-sm btn-outline-secondary me-1" onclick="openEditActivityModal('${actJson}')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="handleActivityDelete('${act.id}', '${act.title}')"><i class="bi bi-trash"></i></button></td></tr>`;
-        });
-        listDiv.innerHTML = html + `</tbody></table></div>`;
-    }
-
-    async function handleActivityDelete(id, title) {
-        if (!confirm(`確定要刪除「${title}」？`)) return;
-        await _supabase.from('activities').delete().eq('id', id); loadActivities();
-    }
+		function openActivityModal() {
+			currentActivityId = null;
+			$('#activityForm')[0].reset();
+			activityModal.show();
+		}
+		
+		function openEditActivityModal(activityStr) {
+			const act = JSON.parse(activityStr);
+			currentActivityId = act.id;
+			
+			$('#a-title').val(act.title);
+			$('#a-activity_date').val(act.activity_date);
+			$('#a-location').val(act.location || '');
+			$('#a-activity_type').val(act.activity_type || '團練');
+			$('#a-is_locked').prop('checked', act.is_locked || false);
+			
+			activityModal.show();
+		}
+		
+		async function submitActivity() {
+			const title = $('#a-title').val().trim();
+			const payload = {
+				title,
+				activity_date: $('#a-activity_date').val(),
+				location: $('#a-location').val().trim() || null,
+				activity_type: $('#a-activity_type').val(),
+				is_locked: $('#a-is_locked').prop('checked')
+			};
+			
+			let { error } = currentActivityId ?
+				await _supabase.from('activities').update(payload).eq('id', currentActivityId) :
+				await _supabase.from('activities').insert([payload]);
+				
+			if (error) {
+				alert("錯誤: " + error.message);
+			} else {
+				activityModal.hide();
+				loadActivities();
+			}
+		}
+		
+		async function loadActivities() {
+			const { data, error } = await _supabase.from('activities').select('*').order('activity_date', { ascending: false });
+			if (error) return;
+		
+			// 儲存目前的篩選值，避免畫面重新整理後被重置
+			const $typeFilter = $('#type-filter');
+			const $yearFilter = $('#year-filter');
+			const currentSelectedType = $typeFilter.val();
+			const currentSelectedYear = $yearFilter.val();
+		
+			// 1. 萃取現有的「不重複類型」與「不重複年份」
+			const typesSet = new Set();
+			const yearsSet = new Set();
+		
+			$.each(data, function(index, act) {
+				if (act.activity_type) typesSet.add(act.activity_type);
+				if (act.activity_date) {
+					const year = act.activity_date.substring(0, 4); // 取出日期前 4 碼年份
+					yearsSet.add(year);
+				}
+			});
+		
+			// 2. 動態生成【類型選單】
+			let typeHtml = `<option value="all">全部類型</option>`;
+			const sortedTypes = Array.from(typesSet).sort();
+			$.each(sortedTypes, function(index, t) {
+				typeHtml += `<option value="${t}">${t}</option>`;
+			});
+			$typeFilter.html(typeHtml);
+			if (currentSelectedType && $typeFilter.find(`option[value="${currentSelectedType}"]`).length > 0) {
+				$typeFilter.val(currentSelectedType);
+			}
+		
+			// 3. 動態生成【年份選單】(依年份由大到小排序)
+			let yearHtml = `<option value="all">全部年份</option>`;
+			const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+			$.each(sortedYears, function(index, y) {
+				yearHtml += `<option value="${y}">${y} 年</option>`;
+			});
+			$yearFilter.html(yearHtml);
+			if (currentSelectedYear && $yearFilter.find(`option[value="${currentSelectedYear}"]`).length > 0) {
+				$yearFilter.val(currentSelectedYear);
+			}
+		
+			// 4. 渲染表格結構 (在 tr 埋入 data-type 與 data-year 屬性)
+			let tableHtml = `
+				<div class="table-responsive bg-white rounded shadow-sm border p-3">
+					<table class="table table-hover align-middle">
+						<thead>
+							<tr><th>活動名稱</th><th>日期</th><th>地點</th><th>類型</th><th>操作</th></tr>
+						</thead>
+						<tbody>`;
+						
+			$.each(data, function(index, act) {
+				const actJson = JSON.stringify(act).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+				const actYear = act.activity_date ? act.activity_date.substring(0, 4) : 'none';
+				
+				tableHtml += `
+					<tr class="activity-row" data-type="${act.activity_type || 'none'}" data-year="${actYear}">
+						<td><strong>${act.title}</strong></td>
+						<td>${act.activity_date || '-'}</td>
+						<td>${act.location || '-'}</td>
+						<td><span class="badge bg-light text-dark border">${act.activity_type}</span></td>
+						<td>
+							<button class="btn btn-sm btn-outline-secondary me-1 edit-activity-btn" data-activity="${actJson}">
+								<i class="bi bi-pencil"></i>
+							</button>
+							<button class="btn btn-sm btn-outline-danger delete-activity-btn" data-id="${act.id}" data-title="${act.title}">
+								<i class="bi bi-trash"></i>
+							</button>
+						</td>
+					</tr>`;
+			});
+			
+			tableHtml += `</tbody></table></div>`;
+			$('#activities-list').html(tableHtml);
+		
+			// 5. 立即觸發交叉過濾，維持使用者上一次選取的條件狀態
+			applyFilters();
+		}
+		
+		async function handleActivityDelete(id, title) {
+			if (!confirm(`確定要刪除「${title}」？`)) return;
+			await _supabase.from('activities').delete().eq('id', id);
+			loadActivities();
+		}
+		
+		// 6. 獨立整合的雙重過濾核心函式
+		function applyFilters() {
+			const selectedType = $('#type-filter').val();
+			const selectedYear = $('#year-filter').val();
+		
+			$('.activity-row').each(function() {
+				const rowType = $(this).data('type');
+				const rowYear = $(this).data('year');
+		
+				// 檢查是否符合類型條件
+				const typeMatch = (selectedType === 'all' || rowType == selectedType);
+				// 檢查是否符合年份條件
+				const yearMatch = (selectedYear === 'all' || rowYear == selectedYear);
+		
+				// 必須同時符合兩者條件才顯示，否則隱藏
+				if (typeMatch && yearMatch) {
+					$(this).show();
+				} else {
+					$(this).hide();
+				}
+			});
+		}
+		
+		// 7. jQuery 事件監聽器區塊
+		$(document).ready(function() {
+			
+			// 當任意一個下拉選單變動時，皆觸發雙重過濾
+			$(document).on('change', '#type-filter, #year-filter', function() {
+				applyFilters();
+			});
+		
+			// 編輯活動按鈕事件委派
+			$(document).on('click', '.edit-activity-btn', function() {
+				const actStr = $(this).attr('data-activity');
+				openEditActivityModal(actStr);
+			});
+		
+			// 刪除活動按鈕事件委派
+			$(document).on('click', '.delete-activity-btn', function() {
+				const id = $(this).attr('data-id');
+				const title = $(this).attr('data-title');
+				handleActivityDelete(id, title);
+			});
+		});
 
 
     /* ==========================================
