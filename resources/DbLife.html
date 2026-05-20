@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>永和慢跑 - 最新公告全覽</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 900px; margin-top: 50px; margin-bottom: 50px; }
+        .nav-tabs .nav-link { color: #495057; font-weight: bold; }
+        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; }
+        /* 文字排版微調 */
+        .tab-pane {
+            line-height: 1.8;
+            color: #333;
+        }
+        .badge {
+            padding: 0.5em 0.8em;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: #f0f7ff;
+            color: #0d6efd;
+        }
+
+        /* 微調輔助樣式 */
+        .border-dashed { border-style: dashed !important; border-width: 2px !important; }
+        .bg-light-subtle { background-color: #f8f9fa !important; }
+        .fw-black { font-weight: 900; }
+        .card { transition: transform 0.2s; }
+        .card:hover { transform: translateY(-3px); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="mb-4">
+        <a href="../index.html" class="btn btn-outline-secondary btn-sm mb-3">← 返回首頁</a>
+        <h1 class="fw-bold">永慢龍舟隊</h1>
+    </div>
+
+    <ul class="nav nav-tabs mb-4" id="announcementTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cat-start" type="button">龍舟隊簡介</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-rights" type="button">歷年紀事與成績</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-contact" type="button">榮耀足跡與戰績</button>
+        </li>
+    </ul>
+    <div class="tab-content bg-white p-4 rounded shadow-sm border">
+
+        <!-- 區塊一：團練課表 -->
+        <div class="tab-pane fade show active" id="cat-start">
+            <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-2 border-primary-subtle">
+                <div class="bg-primary text-white rounded p-2 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 45px; height: 45px;">
+                    <i class="bi bi-water fs-4"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold text-dark mb-0">龍舟隊簡介</h3>
+                    <small class="text-muted fw-semibold">從跑道延伸至水道 · 凝聚跨世代熱血情誼</small>
+                </div>
+            </div>
+            
+            <p class="fs-5 text-secondary leading-relaxed mb-4 border-start border-4 border-warning ps-3 py-1">
+                永和慢跑龍舟隊從跑道延伸至水道，持續透過龍舟運動凝聚會員情誼，推廣全民運動文化，並以實際行動展現跨世代共同參與運動的活力與價值。
+            </p>
+            
+            <div class="row g-4 mt-2">
+                <div class="col-md-7">
+                    <div class="h-100 p-4 bg-white rounded shadow-sm border">
+                        <h5 class="fw-bold text-primary mb-3 d-flex align-items-center">
+                            <i class="bi bi-clock-history me-2"></i> 隊史與發展歷程
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <span class="badge bg-primary mb-2 shadow-sm">2021 年契機</span>
+                            <p class="text-muted small mb-3">長年以推廣跑步、培養全民運動風氣為宗旨。為了讓會員接觸更多元項目並凝聚團隊向心力，由時任理事長 <strong class="text-dark">蘇飛龍</strong> 積極推動龍舟運動發展，正式開啟永和慢跑龍舟隊的成立契機。</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <span class="badge bg-warning text-dark mb-2 shadow-sm">2021 年 12 月 5 日首航</span>
+                            <p class="text-muted small mb-3">第一批成員於三腳渡碼頭首次下水訓練。初期特別邀請愛路迷慢跑社總幹事 <strong class="text-dark">畢啟森</strong> 指導基礎划槳、安全觀念。後續接受 <strong class="text-dark">蔡志威</strong> 與 <strong class="text-dark">林格</strong> 等教練專業指導，逐步凝聚出近 50 人的龍舟團隊規模，強化技術與競技能力。</p>
+                        </div>
+                        
+                        <div>
+                            <span class="badge bg-secondary mb-2 shadow-sm">核心精神</span>
+                            <p class="text-muted small mb-0">由跑者、資深會員與各年齡層運動愛好者共同組成，秉持「挑戰自我、團隊合作、運動不分年齡」的精神，從初創隊伍逐步站上大型賽事舞台，持續參與臺北市與新北市端午龍舟賽事。</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-5 d-flex flex-column g-4">
+                    <div class="card border-0 shadow-sm bg-gradient p-3 mb-3" style="background-color: #f8f9fa; border-left: 4px solid #0d6efd !important;">
+                        <div class="card-body p-2">
+                            <h6 class="fw-bold text-dark mb-2 d-flex align-items-center">
+                                <i class="bi bi-people-fill text-primary me-2"></i> 大眾體驗平台
+                            </h6>
+                            <p class="card-text text-muted small leading-relaxed">
+                                除了競技發展外，隊伍積極推廣龍舟運動。透過體驗活動，讓許多沒有划船經驗的民眾，也能踏上龍舟、感受團隊同舟共濟的熱血與樂趣。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="card border-0 shadow-sm bg-gradient p-3 flex-grow-1" style="background-color: #fff9db; border-left: 4px solid #ffc107 !important;">
+                        <div class="card-body p-2">
+                            <h6 class="fw-bold text-dark mb-2 d-flex align-items-center">
+                                <i class="bi bi-gender-female text-warning me-2"></i> 多元創新與共融
+                            </h6>
+                            <p class="card-text text-muted small leading-relaxed mb-0">
+                                近年更積極推動 <strong class="text-dark">女子隊</strong> 與 <strong class="text-dark">長青隊</strong> 發展，鼓勵不同年齡、背景的會員投入。展現持續創新、多元共融的運動文化，讓龍舟不只是競賽，更成為凝聚情感、交流互助與延續運動熱情的重要媒介。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 區塊三：歷年紀事與成績 -->
+        <div class="tab-pane fade" id="cat-rights">
+            <div class="d-flex align-items-center mb-4 pb-2 border-bottom border-2 border-primary-subtle">
+                <div class="bg-primary text-white rounded p-2 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 45px; height: 45px;">
+                    <i class="bi bi-trophy fs-4"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold text-dark mb-0">歷年紀事與成績</h3>
+                    <small class="text-muted fw-semibold">同舟共濟 · 榮耀里程碑</small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-xl-10 mx-auto">
+                    
+                    <div class="position-relative ps-4 pb-4 border-start border-3 border-primary">
+                        <div class="position-absolute bg-primary rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="fs-4 fw-bold text-primary me-2">2026</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">拓展跨足</span>
+                        </div>
+                        <div class="card border-0 shadow-sm bg-white p-3">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="mb-2 d-flex align-items-start"><i class="bi bi-check-circle-fill text-primary me-2 mt-1"></i> 籌組四支隊伍準備參加「臺北國際龍舟錦標賽」。</li>
+                                <li class="d-flex align-items-start"><i class="bi bi-check-circle-fill text-primary me-2 mt-1"></i> <strong class="text-dark">首度組成兩支全女子隊</strong> 參賽，持續拓展女子龍舟運動發展與激發團隊全新能量。</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="position-relative ps-4 pb-4 border-start border-3 border-primary">
+                        <div class="position-absolute bg-primary rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="fs-4 fw-bold text-primary me-2">2025</span>
+                            <span class="badge bg-warning text-dark border shadow-sm"><i class="bi bi-star-fill me-1"></i>戰績輝煌</span>
+                        </div>
+                        <div class="card border-0 shadow-sm p-3 bg-gradient" style="background: linear-gradient(145deg, #ffffff, #fffdf4); border-left: 4px solid #ffc107 !important;">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="mb-2 d-flex align-items-start text-dark fw-semibold"><i class="bi bi-trophy-fill text-warning me-2 mt-1"></i> 榮獲「新北市議長盃龍舟錦標賽」混合組分組第一名，光榮晉級半決賽！</li>
+                                <li class="mb-2 d-flex align-items-start"><i class="bi bi-check-circle-fill text-primary me-2 mt-1"></i> 首度成立長青女子隊參賽，展現女性與資深跑友投入龍舟運動的滿滿活力。</li>
+                                <li class="mb-2 d-flex align-items-start"><i class="bi bi-mic-fill text-secondary me-2 mt-1"></i> 參加「臺北市國際龍舟錦標賽」時，由隊員 <strong class="text-dark">游正通、林麗雪</strong> 擔任大會宣誓代表。</li>
+                                <li class="d-flex align-items-start"><i class="bi bi-mic-fill text-secondary me-2 mt-1"></i> 參加「新北市議長盃龍舟賽」時，由隊員 <strong class="text-dark">蕭炳森、梁麗水</strong> 獲邀擔任宣誓代表，完美展現「運動不分年齡」的精神典範。</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="position-relative ps-4 pb-4 border-start border-3 border-primary">
+                        <div class="position-absolute bg-primary rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="fs-4 fw-bold text-primary me-2">2024</span>
+                            <span class="badge bg-light text-dark border">嶄新舞台</span>
+                        </div>
+                        <div class="card border-0 shadow-sm bg-white p-3">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="mb-2 d-flex align-items-start"><i class="bi bi-check-circle-fill text-primary me-2 mt-1"></i> 首度揮軍參加「新北市議長盃龍舟賽」，成功開拓全新賽事版圖。</li>
+                                <li class="d-flex align-items-start"><i class="bi bi-mic-fill text-secondary me-2 mt-1"></i> 隊員 <strong class="text-dark">游正通</strong> 表現卓越，獲邀擔任大會宣誓代表。</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="position-relative ps-4 pb-4 border-start border-3 border-primary">
+                        <div class="position-absolute bg-primary rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="fs-4 fw-bold text-primary me-2">2023</span>
+                            <span class="badge bg-light text-dark border">實力初顯</span>
+                        </div>
+                        <div class="card border-0 shadow-sm bg-white p-3">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="mb-2 d-flex align-items-start"><i class="bi bi-check-circle-fill text-primary me-2 mt-1"></i> 參加「臺北國際龍舟錦標賽」。</li>
+                                <li class="d-flex align-items-start text-dark fw-medium"><i class="bi bi-award-fill text-warning me-2 mt-1"></i> 長青隊表現亮眼，榮獲分組第二名，成功晉級複賽。</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="position-relative ps-4 pb-4 border-start border-3 border-primary">
+                        <div class="position-absolute bg-primary rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="fs-4 fw-bold text-primary me-2">2022</span>
+                            <span class="badge bg-light text-dark border">初試啼聲</span>
+                        </div>
+                        <div class="card border-0 shadow-sm bg-white p-3">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="mb-2 d-flex align-items-start"><i class="bi bi-check-circle-fill text-primary me-2 mt-1"></i> 首度組織三支強大隊伍，正式報名參加「臺北國際龍舟錦標賽」。</li>
+                                <li class="mb-2 d-flex align-items-start"><i class="bi bi-broadcast text-danger me-2 mt-1"></i> 憑藉隊伍特色與高人氣，獲大會特別邀請登上大會官方直播台，向全國觀眾介紹永和慢跑龍舟隊成軍歷程與隊員精神。</li>
+                                <li class="d-flex align-items-start"><i class="bi bi-award-fill text-success me-2 mt-1"></i> 大型龍舟混合組首次參賽即展現黑馬之姿，成功晉級。</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="position-relative ps-4">
+                        <div class="position-absolute bg-success rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="fs-4 fw-bold text-success me-2">2021</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">起源創創</span>
+                        </div>
+                        <div class="card border-0 shadow-sm bg-white p-3">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="mb-2 d-flex align-items-start"><i class="bi bi-flag-fill text-success me-2 mt-1"></i> 時任理事長 <strong class="text-dark">蘇飛龍</strong> 積極高瞻遠矚，全力推動龍舟運動發展，拉開創隊序幕。</li>
+                                <li class="mb-2 d-flex align-items-start"><i class="bi bi-water text-info me-2 mt-1"></i> 12 月 5 日，首批熱血隊員正式於三腳渡碼頭完成首次下水訓練。</li>
+                                <li class="d-flex align-items-start"><i class="bi bi-shield-check text-success me-2 mt-1"></i> 在「愛路迷慢跑社」的大力協助與指導下，從基礎划槳出發，逐步建立起精良的龍舟隊培訓制度與團隊雛型。</li>
+                            </ul>
+                        </div>
+                    </div>
+                
+                </div>
+            </div>
+        </div>
+
+        <!-- 區塊四：入會申請 (條列化規定) -->
+        <div class="tab-pane fade" id="cat-contact">
+            <div class="d-flex align-items-center mb-4 pb-2 border-bottom border-2 border-primary-subtle">
+                <div class="bg-primary text-white rounded p-2 me-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 45px; height: 45px;">
+                    <i class="bi bi-trophy-fill fs-4"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold text-dark mb-0">榮耀足跡與戰績</h3>
+                    <small class="text-muted fw-semibold">同舟共濟 · 揮灑水道的輝煌篇章</small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-xl-11 mx-auto">
+                    
+                    <div class="position-relative ps-4 pb-4 border-start border-3 border-primary">
+                        <div class="position-absolute bg-primary rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2 flex-wrap g-2">
+                            <span class="fs-4 fw-bold text-primary me-2 leading-none">2026</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">未來展望</span>
+                        </div>
+                        <div class="card border-0 shadow-sm bg-white p-3">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="d-flex align-items-start">
+                                    <i class="bi bi-arrow-right-circle-fill text-primary me-2 mt-1"></i>
+                                    <span>積極籌組 <strong class="text-dark">4 支強大隊伍</strong> 準備進軍「臺北國際龍舟錦標賽」，其中更特別組織了 <strong class="text-dark">2 隊全女子隊</strong>，展現多元拓展決心。</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="position-relative ps-4 pb-4 border-start border-3 border-primary">
+                        <div class="position-absolute bg-primary rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2 flex-wrap g-2">
+                            <span class="fs-4 fw-bold text-primary me-2 leading-none">2025</span>
+                            <span class="badge bg-warning text-dark border border-warning-subtle shadow-sm small"><i class="bi bi-star-fill me-1"></i>戰績輝煌</span>
+                            <span class="badge bg-info-subtle text-info border border-info-subtle small">榮譽宣誓</span>
+                        </div>
+                        <div class="card border-0 shadow-sm p-3 bg-gradient" style="background: linear-gradient(145deg, #ffffff, #fffdf4); border-left: 4px solid #ffc107 !important;">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="mb-2 d-flex align-items-start text-dark fw-bold">
+                                    <i class="bi bi-trophy-fill text-warning me-2 mt-1"></i>
+                                    <span>「新北市議長盃龍舟錦標賽」混合組榮獲 <span class="bg-warning text-dark px-1 rounded">分組第一名</span>，光榮挺進半決賽！</span>
+                                </li>
+                                <li class="mb-2 d-flex align-items-start">
+                                    <i class="bi bi-gender-female text-danger me-2 mt-1"></i>
+                                    <span>創下新里程碑，首度成軍 <strong class="text-dark">長青女子隊</strong> 報名參賽，激發資深女跑友的運動活力。</span>
+                                </li>
+                                <li class="mb-2 d-flex align-items-start">
+                                    <i class="bi bi-mic-fill text-info me-2 mt-1"></i>
+                                    <span>「臺北市國際龍舟錦標賽」由優秀隊員 <strong class="text-dark">游正通、林麗雪</strong> 獲選代表全體選手擔任大會宣誓代表。</span>
+                                </li>
+                                <li class="d-flex align-items-start">
+                                    <i class="bi bi-heart-fill text-danger me-2 mt-1"></i>
+                                    <span>「新北市議長盃龍舟賽」由隊員 <strong class="text-dark">蕭炳森、梁麗水</strong> 擔任宣誓員，完美彰顯「運動不分年齡」的精神典範。</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="position-relative ps-4 pb-4 border-start border-3 border-primary">
+                        <div class="position-absolute bg-primary rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2 flex-wrap g-2">
+                            <span class="fs-4 fw-bold text-primary me-2 leading-none">2023</span>
+                            <span class="badge bg-light text-dark border small">穩定實力</span>
+                        </div>
+                        <div class="card border-0 shadow-sm bg-white p-3">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="d-flex align-items-start">
+                                    <i class="bi bi-award-fill text-success me-2 mt-1"></i>
+                                    <span>出戰「臺北國際龍舟錦標賽」，其中 <strong class="text-dark">長青隊</strong> 表現亮眼，勇奪分組第二名並順利晉級複賽。</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="position-relative ps-4 pb-4 border-start border-3 border-primary">
+                        <div class="position-absolute bg-primary rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2 flex-wrap g-2">
+                            <span class="fs-4 fw-bold text-primary me-2 leading-none">2022</span>
+                            <span class="badge bg-light text-dark border small">初試啼聲</span>
+                        </div>
+                        <div class="card border-0 shadow-sm bg-white p-3">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="mb-2 d-flex align-items-start">
+                                    <i class="bi bi-broadcast text-danger me-2 mt-1"></i>
+                                    <span>首度組織三支強大隊伍參賽「臺北國際龍舟錦標賽」，因極具特色，獲大會特別邀請登上 <strong class="text-dark">官方直播台</strong> 專訪，宣傳永和慢跑成軍心路歷程。</span>
+                                </li>
+                                <li class="d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-primary me-2 mt-1"></i>
+                                    <span>大型龍舟混合組初登戰場即展現默契，成功獲得晉級資格。</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="position-relative ps-4">
+                        <div class="position-absolute bg-success rounded-circle shadow-sm" style="width: 16px; height: 16px; left: -10px; top: 6px; border: 3px solid #fff;"></div>
+                        
+                        <div class="d-flex align-items-center mb-2 flex-wrap g-2">
+                            <span class="fs-4 fw-bold text-success me-2 leading-none">2021</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle small">起源誕生</span>
+                        </div>
+                        <div class="card border-0 shadow-sm bg-white p-3">
+                            <ul class="list-unstyled mb-0 text-secondary small leading-relaxed">
+                                <li class="mb-2 d-flex align-items-start">
+                                    <i class="bi bi-flag-fill text-success me-2 mt-1"></i>
+                                    <span>10 月時任理事長 <strong class="text-dark">蘇飛龍先生</strong> 具備遠見，為擴大會內多元運動、提昇會員向心力，登高一呼正式開拓龍舟運動。</span>
+                                </li>
+                                <li class="d-flex align-items-start">
+                                    <i class="bi bi-water text-info me-2 mt-1"></i>
+                                    <span>12 月 5 日第一批創隊成員在三腳渡碼頭進行首次下水訓練。當時特別敦請「愛路迷慢跑社總幹事」親自指導，在相互扶持下，迅速穩定成軍發展出近 <strong class="text-dark">50 人規模</strong> 的精良隊伍。</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+</script>
+</body>
+</html>
