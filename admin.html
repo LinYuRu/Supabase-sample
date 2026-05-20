@@ -274,6 +274,27 @@
                                 <label class="form-check-label fw-bold" for="m-entrance_fee_paid">已繳納入會費 (1000元)</label>
                             </div>
                         </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-success">常年會費有效年份 (已繳至)</label>
+                            <select id="m-annual_fee_paid_until" class="form-select border-success">
+                                <option value="">未繳交/無紀錄</option>
+                                <script>
+                                    const y = new Date().getFullYear();
+                                    document.write(`
+                                        <option value="${y+1}">${y+1} 年份</option>
+                                        <option value="${y}" selected>${y} 年份</option>
+                                        <option value="${y-1}">${y-1} 年份</option>
+                                    `);
+                                </script>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input border-success" type="checkbox" id="m-is_next_year_free">
+                                <label class="form-check-label fw-bold text-success" for="m-is_next_year_free">特殊優惠：下一年免常年會費</label>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -440,6 +461,8 @@
         document.getElementById('modalTitle').innerText = "編輯公告"; document.getElementById('saveBtn').innerText = "儲存修改";
         document.getElementById('edit-id').value = id; document.getElementById('edit-title').value = title;
         document.getElementById('edit-text').value = content; document.getElementById('edit-category').value = category || "general";
+        $('#m-annual_fee_paid_until').val(member.annual_fee_paid_until || '');
+        $('#m-is_next_year_free').prop('checked', member.is_next_year_free || false);
         editModal.show();
     }
 
@@ -491,6 +514,22 @@
 		const birth_date = $('#m-birth_date').val();
 		if (!name || !birth_date || !email) return alert("請填寫姓名、出生年月日與 Email");
 	
+		// 1. 自動抓取當前電腦系統年份 (例如：2026)
+		const currentYear = new Date().getFullYear();
+	
+		// 2. 獲取表單輸入的會費已繳交年份
+		const inputPaidUntil = $('#m-annual_fee_paid_until').val();
+		const annual_fee_paid_until = inputPaidUntil ? parseInt(inputPaidUntil) : null;
+		
+		// 3. 獲取管理員手動勾選的「明年是否免會費」
+		let is_next_year_free = $('#m-is_next_year_free').prop('checked');
+	
+		// 邏輯優化：如果管理員勾選了已繳交到「明年(或更久以後)」，
+		// 代表下一年費用已經收過了，實務上通常應將「下一年免會費」標記重設，避免重複扣減。
+		if (annual_fee_paid_until && annual_fee_paid_until > currentYear) {
+			is_next_year_free = false;
+		}
+	
 		const payload = {
 			name, email, birth_date,
 			gender: $('#m-gender').val() || null,
@@ -499,7 +538,11 @@
 			group_number: $('#m-group_number').val() ? parseInt($('#m-group_number').val()) : null,
 			address: $('#m-address').val().trim() || null,
 			is_student: $('#m-is_student').prop('checked'),
-			entrance_fee_paid: $('#m-entrance_fee_paid').prop('checked')
+			entrance_fee_paid: $('#m-entrance_fee_paid').prop('checked'),
+			
+			// 新增帶入的欄位欄位
+			annual_fee_paid_until: annual_fee_paid_until,
+			is_next_year_free: is_next_year_free
 		};
 	
 		let { error } = currentMemberId ?
@@ -727,25 +770,9 @@ function initFormSelects() {
 			loadMembers(); // 重新排序並刷新表格，末端會自動再調用 applyMemberFilters()
 		});
 		
-		// 下拉選單變動篩選事件
-<!--		$(document).on('change', '#group-filter', function() {-->
-<!--			const selectedGroup = $(this).val();-->
-<!--			if (selectedGroup === 'all') {-->
-<!--				$('.member-row').show(); // 顯示全部-->
-<!--			} else {-->
-<!--				$('.member-row').each(function() {-->
-<!--					const rowGroup = $(this).data('group'); // 讀取 HTML5 data-group-->
-<!--					if (rowGroup == selectedGroup) {-->
-<!--						$(this).show();-->
-<!--					} else {-->
-<!--						$(this).hide();-->
-<!--					}-->
-<!--				});-->
-<!--			}-->
-<!--		});-->
 	
-		// 編輯按鈕點擊事件 (從元素 data 屬性傳遞資料)
-		$(document).on('click', '.edit-member-btn', function() {
+	// 編輯按鈕點擊事件 (從元素 data 屬性傳遞資料)
+	$(document).on('click', '.edit-member-btn', function() {
 			const memberStr = $(this).attr('data-member');
 			openEditMemberModal(memberStr);
 		});
