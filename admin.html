@@ -116,6 +116,11 @@
                         </select>
                     </div>
                     <div class="col-auto">
+                        <select id="fee-year-filter" class="form-select shadow-sm" style="min-width: 160px;">
+                            <option value="all">全部會費年份</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
                         <button onclick="openMemberModal()" class="btn btn-primary shadow-sm">
                             <i class="bi bi-person-plus me-1"></i> 新增會員
                         </button>
@@ -608,11 +613,12 @@ async function submitMember() {
 }
 
 
+// ─── 修正後的資料加載與綜合渲染 ───
 async function loadMembers() {
    const { data, error } = await _supabase.from('members').select('*');
    if (error) return;
 
-   // 1. 動態更新「篩選下拉選單」的選項 (維持原始邏輯，抓取不重複的值)
+   // 1. 動態更新「所有篩選下拉選單」的選項
    const $groupFilter = $('#group-filter');
    const currentSelectedGroup = $groupFilter.val() || 'all';
    const groupsSet = new Set();
@@ -621,12 +627,17 @@ async function loadMembers() {
    const currentSelectedCategory = $categoryFilter.val() || 'all';
    const categoriesSet = new Set();
 
+   const $feeYearFilter = $('#fee-year-filter');
+   const currentSelectedYear = $feeYearFilter.val() || 'all';
+   const feeYearsSet = new Set();
+
    $.each(data, function(index, m) {
       if (m.group_number !== null && m.group_number !== undefined) groupsSet.add(m.group_number);
       if (m.category) categoriesSet.add(m.category);
+      if (m.annual_fee_paid_until) feeYearsSet.add(m.annual_fee_paid_until);
    });
    
-   // 渲染組別選單
+   // A. 渲染組別選單
    const sortedGroups = Array.from(groupsSet).sort((a, b) => a - b);
    let groupSelectHtml = `<option value="all">全部組別</option>`;
    $.each(sortedGroups, function(index, g) {
@@ -637,7 +648,7 @@ async function loadMembers() {
    $groupFilter.html(groupSelectHtml);
    if ($groupFilter.find(`option[value="${currentSelectedGroup}"]`).length > 0) $groupFilter.val(currentSelectedGroup);
 
-   // 渲染類別選單
+   // B. 渲染類別選單
    const sortedCategories = Array.from(categoriesSet).sort((a, b) => {
       const textA = categoryMap.get(a) || a;
       const textB = categoryMap.get(b) || b;
@@ -651,16 +662,28 @@ async function loadMembers() {
    $categoryFilter.html(categorySelectHtml);
    if ($categoryFilter.find(`option[value="${currentSelectedCategory}"]`).length > 0) $categoryFilter.val(currentSelectedCategory);
 
+   // C. 渲染會費年份選單
+   const sortedYears = Array.from(feeYearsSet).sort((a, b) => b - a);
+   let feeYearSelectHtml = `<option value="all">全部會費年份</option>`;
+   $.each(sortedYears, function(index, y) {
+      feeYearSelectHtml += `<option value="${y}">已繳至 ${y} 年</option>`;
+   });
+   feeYearSelectHtml += `<option value="none">未繳費 / 已過期</option>`;
+   $feeYearFilter.html(feeYearSelectHtml);
+   if ($feeYearFilter.find(`option[value="${currentSelectedYear}"]`).length > 0) $feeYearFilter.val(currentSelectedYear);
 
-   // 2. 進行前端資料「篩選過濾」
+
+   // 2. 進行前端資料「三條件聯合篩選過濾」
    let filteredData = data.filter(m => {
       const rowGroup = m.group_number !== null && m.group_number !== undefined ? String(m.group_number) : 'none';
       const rowCategory = m.category || 'none';
+      const rowYear = m.annual_fee_paid_until ? String(m.annual_fee_paid_until) : 'none';
 
       const groupMatch = (currentSelectedGroup === 'all' || rowGroup === currentSelectedGroup);
       const categoryMatch = (currentSelectedCategory === 'all' || rowCategory === currentSelectedCategory);
+      const feeYearMatch = (currentSelectedYear === 'all' || rowYear === currentSelectedYear);
 
-      return groupMatch && categoryMatch;
+      return groupMatch && categoryMatch && feeYearMatch;
    });
 
 
@@ -690,17 +713,14 @@ async function loadMembers() {
    const totalRows = filteredData.length;
    const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
    
-   // 防呆：避免因篩選後總頁數變少，導致當前頁碼超出合理範圍
    if (currentPage > totalPages) currentPage = totalPages;
    if (currentPage < 1) currentPage = 1;
 
    const startIndex = (currentPage - 1) * rowsPerPage;
    const endIndex = Math.min(startIndex + rowsPerPage, totalRows);
    
-   // 切割出當前分頁要顯示的資料區段
    const pageData = filteredData.slice(startIndex, endIndex);
 
-   // 更新分頁文字資訊
    if (totalRows === 0) {
       $('#pagination-info').text('查無符合條件的會員資料');
    } else {
@@ -710,26 +730,23 @@ async function loadMembers() {
 
    // 5. 渲染分頁按鈕 UI
    let paginationHtml = '';
-   // 上一頁按鈕
    paginationHtml += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
       <a class="page-link change-page-btn" href="#" data-page="${currentPage - 1}">上一頁</a>
    </li>`;
    
-   // 頁碼數字按鈕
    for (let i = 1; i <= totalPages; i++) {
       paginationHtml += `<li class="page-item ${currentPage === i ? 'active' : ''}">
          <a class="page-link change-page-btn" href="#" data-page="${i}">${i}</a>
       </li>`;
    }
    
-   // 下一頁按鈕
    paginationHtml += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
       <a class="page-link change-page-btn" href="#" data-page="${currentPage + 1}">下一頁</a>
    </li>`;
    $('#pagination-controls').html(paginationHtml);
 
 
-   // 6. 渲染表格結構 (只顯示 pageData 的 10 筆)
+   // 6. 渲染表格結構 (此處已修正 g 變數未定義錯誤)
    const categorySortIcon = currentSort.key === 'category' ? (currentSort.asc ? ' ▲' : ' ▼') : '';
    const groupSortIcon = currentSort.key === 'group_number' ? (currentSort.asc ? ' ▲' : ' ▼') : '';
 
@@ -742,6 +759,7 @@ async function loadMembers() {
             <th>聯絡電話</th>
             <th class="sort-th text-primary" data-key="category" style="cursor: pointer; user-select: none;">類別<small>${categorySortIcon}</small></th>
             <th class="sort-th text-primary" data-key="group_number" style="cursor: pointer; user-select: none;">組別<small>${groupSortIcon}</small></th>
+            <th>會費效期</th>
             <th>操作</th>
             </tr>
          </thead>
@@ -753,8 +771,13 @@ async function loadMembers() {
       
       let displayGroup = '-';
       if (m.group_number !== null && m.group_number !== undefined) {
+         // 修正處：將原本的 groupMap.get(String(g)) 改為 groupMap.get(String(m.group_number))
          displayGroup = groupMap.has(String(m.group_number)) ? groupMap.get(String(m.group_number)) : m.group_number + '組';
       }
+
+      let displayYearBadge = m.annual_fee_paid_until ?
+         `<span class="badge bg-success-subtle text-success border border-success-subtle">${m.annual_fee_paid_until} 年</span>` :
+         `<span class="badge bg-danger-subtle text-danger border border-danger-subtle">未繳費</span>`;
       
       tableHtml += `
          <tr class="member-row">
@@ -762,6 +785,7 @@ async function loadMembers() {
             <td>${m.phone || '-'}</td>
             <td><span class="badge bg-light text-dark border">${displayCategory}</span></td>
             <td>${displayGroup}</td>
+            <td>${displayYearBadge}</td>
             <td>
                <button class="btn btn-sm btn-outline-secondary me-1 edit-member-btn" data-member="${memberJson}">
                <i class="bi bi-pencil"></i>
@@ -817,13 +841,12 @@ function initFormSelects() {
 $(document).ready(function() {
    initFormSelects();
    
-   // 當篩選條件改變時，強制重設回「第 1 頁」並重新計算渲染
-   $(document).on('change', '#group-filter, #category-filter', function() {
+   // 當任何一個篩選條件（組別、類別、會費年份）改變時，重設回第 1 頁並重新加載
+   $(document).on('change', '#group-filter, #category-filter, #fee-year-filter', function() {
       currentPage = 1;
       loadMembers();
    });
 
-   // 點擊排序標頭時，重設回「第 1 頁」以方便看最高/最低的資料
    $(document).on('click', '.sort-th', function() {
       const clickedKey = $(this).data('key');
       if (currentSort.key === clickedKey) {
@@ -836,13 +859,12 @@ $(document).ready(function() {
       loadMembers();
    });
    
-   // ─── 新增：分頁按鈕點擊監聽事件 ───
    $(document).on('click', '.change-page-btn', function(e) {
-      e.preventDefault(); // 防止網頁跳走
+      e.preventDefault();
       const targetPage = $(this).data('page');
       if (targetPage) {
          currentPage = targetPage;
-         loadMembers(); // 切換頁面重新渲染
+         loadMembers();
       }
    });
    
