@@ -122,6 +122,15 @@
                     </div>
                 </div>
                 <div id="members-list"></div>
+                <div class="d-flex justify-content-between align-items-center mt-3 px-2">
+                    <div id="pagination-info" class="text-muted small">
+                        顯示第 0 到 0 筆資料，共 0 筆
+                    </div>
+                    <nav aria-label="Member list pagination">
+                        <ul class="pagination pagination-sm mb-0" id="pagination-controls">
+                        </ul>
+                    </nav>
+                </div>
             </div>
             
             <div class="tab-pane fade" id="activities-panel" role="tabpanel">
@@ -383,10 +392,12 @@
 	
 	// 會員清單排序全域變數：擴充儲存目前表格的排序狀態 (預設組別升冪)
 	let currentSort = { key: 'group_number', asc: true };
+    let currentPage = 1;const rowsPerPage = 10;        // 當前所在頁碼&每頁顯示幾筆資料
     // 組別也可以用 Map 維護，方便未來要更改成「A組、B組」或擴充組數
     const genderMap = new Map([ ['Male', '男'], ['Female', '女'] ]);
-    const categoryMap = new Map([ ['Applicant', '申請中 (新入會)'], ['Student', '學生會員'], ['General', '一般會員'], ['Permanent', '永久會員'] ]);
+    const categoryMap = new Map([ ['Applicant', '申請中 (新入會)'], ['Student', '學生會員'], ['General', '一般會員'], ['Permanent', '永久會員'], ['Retirement', '已退會'] ]);
     const groupMap = new Map([ ['1', '第 1 組'], ['2', '第 2 組'], ['3', '第 3 組'], ['4', '第 4 組'], ['5', '第 5 組'], ['6', '第 6 組'], ['7', '第 7 組'], ['8', '第 8 組'], ['9', '第 9 組'] ]);
+
 
     let editModal, memberModal, activityModal;
     let currentMemberId = null;
@@ -504,125 +515,157 @@
     /* ==========================================
        2. 會員管理 邏輯
        ========================================== */
-	function openMemberModal() {
-		currentMemberId = null;
-		$('#memberForm')[0].reset(); // 使用 jQuery 選取並轉換為 DOM 元素重設表單
-		
-		// 確保服裝發放數量重設為預設值 0
-		$('#m-gear-vest').val(0);
-		$('#m-gear-long').val(0);
-		$('#m-gear-short').val(0);
-		
-		memberModal.show();
-	}
+function openMemberModal() {
+   currentMemberId = null;
+   $('#memberForm')[0].reset();
+   $('#m-gear-vest').val(0);
+   $('#m-gear-long').val(0);
+   $('#m-gear-short').val(0);
+   memberModal.show();
+}
 
-	function openEditMemberModal(memberStr) {
-		const member = JSON.parse(memberStr);
-		currentMemberId = member.id;
-		
-		// 使用 jQuery 的 #id 代替 document.getElementById
-		$('#m-name').val(member.name || '');
-		$('#m-gender').val(member.gender || '');
-		$('#m-birth_date').val(member.birth_date || '');
-		$('#m-phone').val(member.phone || '');
-		$('#m-email').val(member.email || '');
-		$('#m-category').val(member.category || 'Applicant');
-		$('#m-group_number').val(member.group_number || '');
-		$('#m-address').val(member.address || '');
-		$('#m-is_student').prop('checked', member.is_student || false); // 使用 prop 處理 checkbox
-		$('#m-entrance_fee_paid').prop('checked', member.entrance_fee_paid || false);
-		$('#m-annual_fee_paid_until').val(member.annual_fee_paid_until || '');
-		$('#m-is_next_year_free').prop('checked', member.is_next_year_free || false);
-		
-		// 解析並還原服裝裝備 JSON 資料
-		const gear = member.gear_received_json || { vest: 0, long_sleeve: 0, short_sleeve: 0 };
-		$('#m-gear-vest').val(gear.vest !== undefined ? gear.vest : 0);
-		$('#m-gear-long').val(gear.long_sleeve !== undefined ? gear.long_sleeve : 0);
-		$('#m-gear-short').val(gear.short_sleeve !== undefined ? gear.short_sleeve : 0);
-		
-		memberModal.show();
-	}
+function openEditMemberModal(memberStr) {
+   const member = JSON.parse(memberStr);
+   currentMemberId = member.id;
+   
+   $('#m-name').val(member.name || '');
+   $('#m-gender').val(member.gender || '');
+   $('#m-birth_date').val(member.birth_date || '');
+   $('#m-phone').val(member.phone || '');
+   $('#m-email').val(member.email || '');
+   $('#m-category').val(member.category || 'Applicant');
+   $('#m-group_number').val(member.group_number || '');
+   $('#m-address').val(member.address || '');
+   $('#m-is_student').prop('checked', member.is_student || false);
+   $('#m-entrance_fee_paid').prop('checked', member.entrance_fee_paid || false);
+   $('#m-annual_fee_paid_until').val(member.annual_fee_paid_until || '');
+   $('#m-is_next_year_free').prop('checked', member.is_next_year_free || false);
+   
+   const gear = member.gear_received_json || { vest: 0, long_sleeve: 0, short_sleeve: 0 };
+   $('#m-gear-vest').val(gear.vest !== undefined ? gear.vest : 0);
+   $('#m-gear-long').val(gear.long_sleeve !== undefined ? gear.long_sleeve : 0);
+   $('#m-gear-short').val(gear.short_sleeve !== undefined ? gear.short_sleeve : 0);
+   
+   memberModal.show();
+}
 
-	async function submitMember() {
-		const name = $('#m-name').val().trim();
-		const email = $('#m-email').val().trim();
-		const birth_date = $('#m-birth_date').val();
-		if (!name || !birth_date || !email) return alert("請填寫姓名、出生年月日與 Email");
-		
-		// 1. 自動抓取當前電腦系統年份
-		const currentYear = new Date().getFullYear();
-		
-		// 2. 獲取表單輸入的會費已繳交年份
-		const inputPaidUntil = $('#m-annual_fee_paid_until').val();
-		const annual_fee_paid_until = inputPaidUntil ? parseInt(inputPaidUntil) : null;
-		
-		// 3. 獲取管理員手動勾選的「明年是否免會費」
-		let is_next_year_free = $('#m-is_next_year_free').prop('checked');
-		
-		// 邏輯優化：若費用收過明年，自動校正免會費標記
-		if (annual_fee_paid_until && annual_fee_paid_until > currentYear) {
-			is_next_year_free = false;
-		}
-		
-		// 4. 封裝服裝發放數量的 JSON 結構
-		const gear_received_json = {
-			vest: parseInt($('#m-gear-vest').val()) || 0,
-			long_sleeve: parseInt($('#m-gear-long').val()) || 0,
-			short_sleeve: parseInt($('#m-gear-short').val()) || 0
-		};
-		
-		// ─── 5. 獲取當前系統登入的操作者人員 ───
-		let operatorName = 'System';
-		try {
-			const { data: { user }, error: userError } = await _supabase.auth.getUser();
-			if (!userError && user) {
-				// 可依您的系統偏好選擇儲存 user.email 或 user.id
-				operatorName = user.email || user.id;
-			}
-		} catch (e) {
-			console.error("無法取得當前使用者資訊：", e);
-		}
-		// ─────────────────────────────────────
-		
-		const payload = {
-			name, email, birth_date,
-			gender: $('#m-gender').val() || null,
-			phone: $('#m-phone').val().trim() || null,
-			category: $('#m-category').val(),
-			group_number: $('#m-group_number').val() ? parseInt($('#m-group_number').val()) : null,
-			address: $('#m-address').val().trim() || null,
-			is_student: $('#m-is_student').prop('checked'),
-			entrance_fee_paid: $('#m-entrance_fee_paid').prop('checked'),
-			
-			// 常年會費與服裝相關欄位
-			annual_fee_paid_until: annual_fee_paid_until,
-			is_next_year_free: is_next_year_free,
-			gear_received_json: gear_received_json,
-			
-			// ─── 新增：指派更動人員 ───
-			updated_by: operatorName
-			// 註：updated_at 不需要手動傳入，SQL Database 端的 Trigger 觸發器會自行動態更新時間
-		};
-		
-		let { error } = currentMemberId ?
-			await _supabase.from('members').update(payload).eq('id', currentMemberId) :
-			await _supabase.from('members').insert([payload]);
-			
-		if (error) {
-			alert("錯誤: " + error.message);
-		} else {
-			memberModal.hide();
-			loadMembers();
-		}
-	}
+async function submitMember() {
+   const name = $('#m-name').val().trim();
+   const email = $('#m-email').val().trim();
+   const birth_date = $('#m-birth_date').val();
+   if (!name || !birth_date || !email) return alert("請填寫姓名、出生年月日與 Email");
+
+   const currentYear = new Date().getFullYear();
+   const inputPaidUntil = $('#m-annual_fee_paid_until').val();
+   const annual_fee_paid_until = inputPaidUntil ? parseInt(inputPaidUntil) : null;
+   
+   let is_next_year_free = $('#m-is_next_year_free').prop('checked');
+   if (annual_fee_paid_until && annual_fee_paid_until > currentYear) {
+      is_next_year_free = false;
+   }
+
+   const gear_received_json = {
+      vest: parseInt($('#m-gear-vest').val()) || 0,
+      long_sleeve: parseInt($('#m-gear-long').val()) || 0,
+      short_sleeve: parseInt($('#m-gear-short').val()) || 0
+   };
+
+   let operatorName = 'System';
+   try {
+      const { data: { user }, error: userError } = await _supabase.auth.getUser();
+      if (!userError && user) {
+         operatorName = user.email || user.id;
+      }
+   } catch (e) {
+      console.error("無法取得當前使用者資訊：", e);
+   }
+
+   const payload = {
+      name, email, birth_date,
+      gender: $('#m-gender').val() || null,
+      phone: $('#m-phone').val().trim() || null,
+      category: $('#m-category').val(),
+      group_number: $('#m-group_number').val() ? parseInt($('#m-group_number').val()) : null,
+      address: $('#m-address').val().trim() || null,
+      is_student: $('#m-is_student').prop('checked'),
+      entrance_fee_paid: $('#m-entrance_fee_paid').prop('checked'),
+      annual_fee_paid_until: annual_fee_paid_until,
+      is_next_year_free: is_next_year_free,
+      gear_received_json: gear_received_json,
+      updated_by: operatorName
+   };
+
+   let { error } = currentMemberId ?
+      await _supabase.from('members').update(payload).eq('id', currentMemberId) :
+      await _supabase.from('members').insert([payload]);
+      
+   if (error) {
+      alert("錯誤: " + error.message);
+   } else {
+      memberModal.hide();
+      loadMembers();
+   }
+}
 
 
 async function loadMembers() {
    const { data, error } = await _supabase.from('members').select('*');
    if (error) return;
 
-   // 1. 核心排序邏輯
-   data.sort((a, b) => {
+   // 1. 動態更新「篩選下拉選單」的選項 (維持原始邏輯，抓取不重複的值)
+   const $groupFilter = $('#group-filter');
+   const currentSelectedGroup = $groupFilter.val() || 'all';
+   const groupsSet = new Set();
+   
+   const $categoryFilter = $('#category-filter');
+   const currentSelectedCategory = $categoryFilter.val() || 'all';
+   const categoriesSet = new Set();
+
+   $.each(data, function(index, m) {
+      if (m.group_number !== null && m.group_number !== undefined) groupsSet.add(m.group_number);
+      if (m.category) categoriesSet.add(m.category);
+   });
+   
+   // 渲染組別選單
+   const sortedGroups = Array.from(groupsSet).sort((a, b) => a - b);
+   let groupSelectHtml = `<option value="all">全部組別</option>`;
+   $.each(sortedGroups, function(index, g) {
+      const groupText = groupMap.has(String(g)) ? groupMap.get(String(g)) : g + '組';
+      groupSelectHtml += `<option value="${g}">${groupText}</option>`;
+   });
+   groupSelectHtml += `<option value="none">未分組</option>`;
+   $groupFilter.html(groupSelectHtml);
+   if ($groupFilter.find(`option[value="${currentSelectedGroup}"]`).length > 0) $groupFilter.val(currentSelectedGroup);
+
+   // 渲染類別選單
+   const sortedCategories = Array.from(categoriesSet).sort((a, b) => {
+      const textA = categoryMap.get(a) || a;
+      const textB = categoryMap.get(b) || b;
+      return textA.localeCompare(textB, 'zh-TW');
+   });
+   let categorySelectHtml = `<option value="all">全部類別</option>`;
+   $.each(sortedCategories, function(index, c) {
+      const categoryText = categoryMap.has(c) ? categoryMap.get(c) : c;
+      categorySelectHtml += `<option value="${c}">${categoryText}</option>`;
+   });
+   $categoryFilter.html(categorySelectHtml);
+   if ($categoryFilter.find(`option[value="${currentSelectedCategory}"]`).length > 0) $categoryFilter.val(currentSelectedCategory);
+
+
+   // 2. 進行前端資料「篩選過濾」
+   let filteredData = data.filter(m => {
+      const rowGroup = m.group_number !== null && m.group_number !== undefined ? String(m.group_number) : 'none';
+      const rowCategory = m.category || 'none';
+
+      const groupMatch = (currentSelectedGroup === 'all' || rowGroup === currentSelectedGroup);
+      const categoryMatch = (currentSelectedCategory === 'all' || rowCategory === currentSelectedCategory);
+
+      return groupMatch && categoryMatch;
+   });
+
+
+   // 3. 進行前端資料「欄位排序」
+   filteredData.sort((a, b) => {
       let valA = a[currentSort.key];
       let valB = b[currentSort.key];
 
@@ -635,67 +678,61 @@ async function loadMembers() {
       if (currentSort.key === 'category') {
          if (!valA) return 1;
          if (!valB) return -1;
-         const textA = categoryMap.has(valA) ? categoryMap.get(valA) : valA;
-         const textB = categoryMap.has(valB) ? categoryMap.get(valB) : valB;
+         const textA = categoryMap.get(valA) || valA;
+         const textB = categoryMap.get(valB) || valB;
          return currentSort.asc ? textA.localeCompare(textB, 'zh-TW') : textB.localeCompare(textA, 'zh-TW');
       }
       return 0;
    });
 
-   // 2. 記錄並動態生成【組別過濾選單】
-   const $groupFilter = $('#group-filter');
-   const currentSelectedGroup = $groupFilter.val();
-   const groupsSet = new Set();
+
+   // 4. 計算分頁範圍與資訊
+   const totalRows = filteredData.length;
+   const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
    
-   // 3. 記錄並動態生成【類別過濾選單】
-   const $categoryFilter = $('#category-filter');
-   const currentSelectedCategory = $categoryFilter.val();
-   const categoriesSet = new Set();
+   // 防呆：避免因篩選後總頁數變少，導致當前頁碼超出合理範圍
+   if (currentPage > totalPages) currentPage = totalPages;
+   if (currentPage < 1) currentPage = 1;
 
-   // 提取現有的不重複組別與類別代碼
-   $.each(data, function(index, m) {
-   if (m.group_number !== null && m.group_number !== undefined) {
-      groupsSet.add(m.group_number);
-   }
-   if (m.category) {
-      categoriesSet.add(m.category);
-   }
-   });
+   const startIndex = (currentPage - 1) * rowsPerPage;
+   const endIndex = Math.min(startIndex + rowsPerPage, totalRows);
    
-   // 渲染組別選單
-   const sortedGroups = Array.from(groupsSet).sort((a, b) => a - b);
-   let groupSelectHtml = `<option value="all">全部組別</option>`;
-   $.each(sortedGroups, function(index, g) {
-   const groupText = groupMap.has(String(g)) ? groupMap.get(String(g)) : g + '組';
-   groupSelectHtml += `<option value="${g}">${groupText}</option>`;
-   });
-   groupSelectHtml += `<option value="none">未分組</option>`;
-   $groupFilter.html(groupSelectHtml);
-   if (currentSelectedGroup && $groupFilter.find(`option[value="${currentSelectedGroup}"]`).length > 0) {
-   $groupFilter.val(currentSelectedGroup);
+   // 切割出當前分頁要顯示的資料區段
+   const pageData = filteredData.slice(startIndex, endIndex);
+
+   // 更新分頁文字資訊
+   if (totalRows === 0) {
+      $('#pagination-info').text('查無符合條件的會員資料');
+   } else {
+      $('#pagination-info').text(`顯示第 ${startIndex + 1} 到 ${endIndex} 筆資料，共 ${totalRows} 筆`);
    }
 
-   // 渲染類別選單 (依 Map 對應的中文名稱排序，讓介面更好看)
-   const sortedCategories = Array.from(categoriesSet).sort((a, b) => {
-      const textA = categoryMap.get(a) || a;
-      const textB = categoryMap.get(b) || b;
-      return textA.localeCompare(textB, 'zh-TW');
-   });
-   let categorySelectHtml = `<option value="all">全部類別</option>`;
-   $.each(sortedCategories, function(index, c) {
-      const categoryText = categoryMap.has(c) ? categoryMap.get(c) : c;
-      categorySelectHtml += `<option value="${c}">${categoryText}</option>`;
-   });
-   $categoryFilter.html(categorySelectHtml);
-   if (currentSelectedCategory && $categoryFilter.find(`option[value="${currentSelectedCategory}"]`).length > 0) {
-      $categoryFilter.val(currentSelectedCategory);
-   }
 
-   // 4. 產生標頭排序符號 (▲/▼)
+   // 5. 渲染分頁按鈕 UI
+   let paginationHtml = '';
+   // 上一頁按鈕
+   paginationHtml += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link change-page-btn" href="#" data-page="${currentPage - 1}">上一頁</a>
+   </li>`;
+   
+   // 頁碼數字按鈕
+   for (let i = 1; i <= totalPages; i++) {
+      paginationHtml += `<li class="page-item ${currentPage === i ? 'active' : ''}">
+         <a class="page-link change-page-btn" href="#" data-page="${i}">${i}</a>
+      </li>`;
+   }
+   
+   // 下一頁按鈕
+   paginationHtml += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link change-page-btn" href="#" data-page="${currentPage + 1}">下一頁</a>
+   </li>`;
+   $('#pagination-controls').html(paginationHtml);
+
+
+   // 6. 渲染表格結構 (只顯示 pageData 的 10 筆)
    const categorySortIcon = currentSort.key === 'category' ? (currentSort.asc ? ' ▲' : ' ▼') : '';
    const groupSortIcon = currentSort.key === 'group_number' ? (currentSort.asc ? ' ▲' : ' ▼') : '';
 
-   // 5. 渲染表格結構 (在 tr 埋入 data-group 與 data-category 屬性供 jQuery 過濾)
    let tableHtml = `
    <div class="table-responsive bg-white rounded shadow-sm border p-3">
       <table class="table table-hover align-middle">
@@ -710,41 +747,34 @@ async function loadMembers() {
          </thead>
          <tbody>`;
          
-   $.each(data, function(index, m) {
-   // 重要防呆：為防 JSON 轉型出錯，確保傳遞正確的字串格式
-   const memberJson = JSON.stringify(m).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-   const groupAttr = m.group_number ? m.group_number : 'none';
-   const categoryAttr = m.category ? m.category : 'none';
-   
-   const displayCategory = categoryMap.has(m.category) ? categoryMap.get(m.category) : (m.category || '-');
-   
-   let displayGroup = '-';
-   if (m.group_number !== null && m.group_number !== undefined) {
-      displayGroup = groupMap.has(String(m.group_number)) ? groupMap.get(String(m.group_number)) : m.group_number + '組';
-   }
-   
-   tableHtml += `
-      <tr class="member-row" data-group="${groupAttr}" data-category="${categoryAttr}">
-         <td><strong>${m.name}</strong></td>
-         <td>${m.phone || '-'}</td>
-         <td><span class="badge bg-light text-dark border">${displayCategory}</span></td>
-         <td>${displayGroup}</td>
-         <td>
-            <button class="btn btn-sm btn-outline-secondary me-1 edit-member-btn" data-member="${memberJson}">
-            <i class="bi bi-pencil"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger delete-member-btn" data-id="${m.id}" data-name="${m.name}">
-            <i class="bi bi-trash"></i>
-            </button>
-         </td>
-      </tr>`;
+   $.each(pageData, function(index, m) {
+      const memberJson = JSON.stringify(m).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+      const displayCategory = categoryMap.has(m.category) ? categoryMap.get(m.category) : (m.category || '-');
+      
+      let displayGroup = '-';
+      if (m.group_number !== null && m.group_number !== undefined) {
+         displayGroup = groupMap.has(String(m.group_number)) ? groupMap.get(String(m.group_number)) : m.group_number + '組';
+      }
+      
+      tableHtml += `
+         <tr class="member-row">
+            <td><strong>${m.name}</strong></td>
+            <td>${m.phone || '-'}</td>
+            <td><span class="badge bg-light text-dark border">${displayCategory}</span></td>
+            <td>${displayGroup}</td>
+            <td>
+               <button class="btn btn-sm btn-outline-secondary me-1 edit-member-btn" data-member="${memberJson}">
+               <i class="bi bi-pencil"></i>
+               </button>
+               <button class="btn btn-sm btn-outline-danger delete-member-btn" data-id="${m.id}" data-name="${m.name}">
+               <i class="bi bi-trash"></i>
+               </button>
+            </td>
+         </tr>`;
    });
    
    tableHtml += `</tbody></table></div>`;
    $('#members-list').html(tableHtml);
-
-   // 立即執行過濾程序，以維持目前的選取畫面
-   applyMemberFilters();
 }
 
 // 6. 整合的雙選單交叉過濾核心函式
@@ -756,12 +786,9 @@ function applyMemberFilters() {
       const rowGroup = $(this).attr('data-group');
       const rowCategory = $(this).attr('data-category');
 
-      // 檢查組別條件 (考慮 'all' 與 'none')
       const groupMatch = (selectedGroup === 'all' || rowGroup === selectedGroup);
-      // 檢查類別條件
       const categoryMatch = (selectedCategory === 'all' || rowCategory === selectedCategory);
 
-      // 必須組別與類別同時符合，才顯示該列
       if (groupMatch && categoryMatch) {
          $(this).show();
       } else {
@@ -771,19 +798,16 @@ function applyMemberFilters() {
 }
 
 function initFormSelects() {
-   // 渲染【性別】下拉選單 (保留原本 HTML 寫好的第一個預設提示 option)
    genderMap.forEach((text, value) => {
        $('#m-gender').append(`<option value="${value}">${text}</option>`);
    });
 
-   // 渲染【會員類別】下拉選單 (此選單無提示，直接用 .html() 覆寫)
    let categoryHtml = '';
    categoryMap.forEach((text, value) => {
        categoryHtml += `<option value="${value}">${text}</option>`;
    });
    $('#m-category').html(categoryHtml);
 
-   // 渲染【所屬組別】下拉選單 (保留原本的請選擇提示)
    groupMap.forEach((text, value) => {
        $('#m-group_number').append(`<option value="${value}">${text}</option>`);
    });
@@ -793,31 +817,40 @@ function initFormSelects() {
 $(document).ready(function() {
    initFormSelects();
    
-   // 當「組別」或「類別」任一選單改變時，立即連動交叉篩選
+   // 當篩選條件改變時，強制重設回「第 1 頁」並重新計算渲染
    $(document).on('change', '#group-filter, #category-filter', function() {
-      applyMemberFilters();
+      currentPage = 1;
+      loadMembers();
    });
 
-   // 監聽點擊表格標頭欄位排序
+   // 點擊排序標頭時，重設回「第 1 頁」以方便看最高/最低的資料
    $(document).on('click', '.sort-th', function() {
       const clickedKey = $(this).data('key');
-      
       if (currentSort.key === clickedKey) {
          currentSort.asc = !currentSort.asc;
       } else {
          currentSort.key = clickedKey;
          currentSort.asc = true;
       }
+      currentPage = 1;
       loadMembers();
    });
    
-   // 編輯按鈕點擊事件 (從元素 data 屬性傳遞資料)
+   // ─── 新增：分頁按鈕點擊監聽事件 ───
+   $(document).on('click', '.change-page-btn', function(e) {
+      e.preventDefault(); // 防止網頁跳走
+      const targetPage = $(this).data('page');
+      if (targetPage) {
+         currentPage = targetPage;
+         loadMembers(); // 切換頁面重新渲染
+      }
+   });
+   
    $(document).on('click', '.edit-member-btn', function() {
       const memberStr = $(this).attr('data-member');
       openEditMemberModal(memberStr);
    });
 
-   // 刪除按鈕點擊事件
    $(document).on('click', '.delete-member-btn', function() {
       const id = $(this).attr('data-id');
       const name = $(this).attr('data-name');
