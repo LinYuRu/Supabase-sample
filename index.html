@@ -283,8 +283,10 @@
             const { data, error } = await _supabase
                 .from('posts')
                 .select('title, created_at')
-                .order('created_at', { ascending: false })
-                .limit(3);
+                .order('created_at', { ascending: false }) // 依建立時間由新到舊排序
+                .limit(3);     // 限制只取前 3 筆
+                
+            if (error) throw error; // 若 Supabase 查詢有錯則拋出異常
 
             const list = document.getElementById('preview-list');
             if (data && data.length > 0) {
