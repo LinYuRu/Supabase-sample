@@ -247,7 +247,6 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold">性別</label>
                             <select id="m-gender" class="form-select">
-                                <option value="">請選擇性別</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -293,6 +292,7 @@
                             <label class="form-label fw-bold text-success">常年會費有效年份 (已繳至)</label>
                             <select id="m-annual_fee_paid_until" class="form-select border-success">
                                 <option value="">未繳交/無紀錄</option>
+                                <option value="9999">永久會員(無須繳費)</option>
                                 <script>
                                     const y = new Date().getFullYear();
                                     document.write(`
@@ -302,12 +302,6 @@
                                     `);
                                 </script>
                             </select>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check form-switch mt-4">
-                                <input class="form-check-input border-success" type="checkbox" id="m-is_next_year_free">
-                                <label class="form-check-label fw-bold text-success" for="m-is_next_year_free">特殊優惠：下一年免常年會費</label>
-                            </div>
                         </div>
                         <div class="col-12">
                             <div class="card border-info bg-light-subtle">
@@ -666,7 +660,11 @@ async function loadMembers() {
    const sortedYears = Array.from(feeYearsSet).sort((a, b) => b - a);
    let feeYearSelectHtml = `<option value="all">全部會費年份</option>`;
    $.each(sortedYears, function(index, y) {
-      feeYearSelectHtml += `<option value="${y}">已繳至 ${y} 年</option>`;
+      if (y === 9999) {
+         feeYearSelectHtml += `<option value="9999">永久會員</option>`;
+      } else {
+         feeYearSelectHtml += `<option value="${y}">已繳至 ${y} 年</option>`;
+      }
    });
    feeYearSelectHtml += `<option value="none">未繳費 / 已過期</option>`;
    $feeYearFilter.html(feeYearSelectHtml);
@@ -775,9 +773,14 @@ async function loadMembers() {
          displayGroup = groupMap.has(String(m.group_number)) ? groupMap.get(String(m.group_number)) : m.group_number + '組';
       }
 
-      let displayYearBadge = m.annual_fee_paid_until ?
-         `<span class="badge bg-success-subtle text-success border border-success-subtle">${m.annual_fee_paid_until} 年</span>` :
-         `<span class="badge bg-danger-subtle text-danger border border-danger-subtle">未繳費</span>`;
+      let displayYearBadge = '';
+      if (m.annual_fee_paid_until === 9999) {
+         displayYearBadge = `<span class="badge bg-info text-dark border border-info-subtle">永久會員</span>`;
+      } else if (m.annual_fee_paid_until) {
+         displayYearBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle">${m.annual_fee_paid_until} 年</span>`;
+      } else {
+         displayYearBadge = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle">未繳費</span>`;
+      }
       
       tableHtml += `
          <tr class="member-row">
@@ -842,6 +845,15 @@ $(document).ready(function() {
    initFormSelects();
    
    // 當任何一個篩選條件（組別、類別、會費年份）改變時，重設回第 1 頁並重新加載
+   $(document).on('change', '#m-category', function() {
+      const selectedText = $(this).find('option:selected').text();
+      const selectedValue = $(this).val();
+      
+      // 依據文字名稱或是 value 進行判定 (此處支援字串「永久會員」或對應的 key)
+      if (selectedText === '永久會員' || selectedValue === 'Lifetime' || selectedValue === '永久會員') {
+         $('#m-annual_fee_paid_until').val('9999');
+      }
+   });
    $(document).on('change', '#group-filter, #category-filter, #fee-year-filter', function() {
       currentPage = 1;
       loadMembers();

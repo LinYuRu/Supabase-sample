@@ -31,16 +31,12 @@
         <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-member" type="button">會員專區</button>
         </li>
-        <li class="nav-item">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-rules" type="button">規章制度</button>
-        </li>
     </ul>
 
     <div class="tab-content bg-white p-4 rounded shadow-sm border">
         <div class="tab-pane fade show active" id="cat-general">讀取中...</div>
         <div class="tab-pane fade" id="cat-event"></div>
         <div class="tab-pane fade" id="cat-member"></div>
-        <div class="tab-pane fade" id="cat-rules"></div>
     </div>
 </div>
 
@@ -62,7 +58,7 @@
             return;
         }
 
-        const categories = ['general', 'event', 'member', 'rules'];
+        const categories = ['general', 'event', 'member'];
         categories.forEach(cat => {
             const el = document.getElementById(`cat-${cat}`);
             if (el) el.innerHTML = '';
