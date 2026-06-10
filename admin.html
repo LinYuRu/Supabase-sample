@@ -96,11 +96,31 @@
                     <div class="col">
                         <h4 class="fw-bold mb-0">最新公告列表</h4>
                     </div>
-                    <div class="col-auto">
-                        <button onclick="openAddModal()" class="btn btn-success shadow-sm">
-                            <i class="bi bi-plus-lg me-1"></i> 新增公告
-                        </button>
+                    <div class="row g-2 mb-4 align-items-center bg-light p-3 rounded shadow-sm">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted mb-1">公告年份</label>
+                            <select id="filter-year" class="form-select" onchange="filterPosts()">
+                                <option value="all">全部年份</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted mb-1">公告類別</label>
+                            <select id="filter-category" class="form-select" onchange="filterPosts()">
+                                <option value="all">全部類別</option>
+                                <option value="general">一般公告</option>
+                                <option value="event">活動訊息</option>
+                                <option value="member">會員專區</option>
+                                <option value="rules">理監事會議紀錄</option>
+                            </select>
+                        </div>
+                        <div class="col text-md-end mt-3 mt-md-0">
+                            <!--                            <button class="btn btn-dark px-4" onclick="openAddModal()">-->
+                            <button onclick="openAddModal()" class="btn btn-success shadow-sm">
+                                <i class="bi bi-plus-lg me-1"></i> 新增公告
+                            </button>
+                        </div>
                     </div>
+
                 </div>
                 <div id="posts-list"></div>
             </div>
@@ -492,6 +512,8 @@
     let editModal, memberModal, activityModal;
     let currentMemberId = null;
     let currentActivityId = null;
+    // 宣告一個全域變數，用來存放從 Supabase 取得的原始公告清單
+    let allPosts = [];
     // 全域變數暫存出席原始資料FOR報表
     let rawAttendanceData = [];
 
@@ -552,58 +574,163 @@
     /* ==========================================
        1. 公告管理 邏輯
        ========================================== */
-    async function loadPosts() {
-        const listDiv = document.getElementById('posts-list');
-        listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
-        const { data, error } = await _supabase.from('posts').select('*').order('created_at', { ascending: false });
-        if (error) { listDiv.innerHTML = `<div class="alert alert-danger">載入失敗: ${error.message}</div>`; return; }
 
-        listDiv.innerHTML = '';
-        data.forEach(post => {
-            listDiv.innerHTML += `
-                <div class="card post-card shadow-sm p-3 mb-3 bg-white">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <span class="category-badge bg-${post.category || 'general'} mb-2 d-inline-block">${catNames[post.category] || '未分類'}</span>
-                            <h5 class="mb-1 fw-bold text-dark">${post.title}</h5>
-                            <small class="text-muted"><i class="bi bi-clock me-1"></i>${new Date(post.created_at).toLocaleDateString()}</small>
-                        </div>
-                        <div class="col-auto">
-                            <button class="btn btn-outline-primary btn-sm me-1" onclick="openEditModal(${post.id}, '${post.title}', \`${post.content}\`, '${post.category}')"><i class="bi bi-pencil"></i> 編輯</button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="handleDelete(${post.id})"><i class="bi bi-trash"></i> 刪除</button>
-                        </div>
+
+
+// 1. 載入原始公告資料
+async function loadPosts() {
+    const listDiv = document.getElementById('posts-list');
+    listDiv.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div></div>';
+    
+    // 從資料庫撈取全部公告
+    const { data, error } = await _supabase.from('posts').select('*').order('created_at', { ascending: false });
+    if (error) {
+        listDiv.innerHTML = `<div class="alert alert-danger">載入失敗: ${error.message}</div>`;
+        return;
+    }
+
+    // 將資料暫存到全域變數中
+    allPosts = data || [];
+    
+    // 智慧型動態建立年份下拉選單
+    buildYearFilter();
+    
+    // 執行第一次的畫面過濾與渲染
+    filterPosts();
+}
+
+// 2. 智慧型去重，動態建立年份下拉選單
+function buildYearFilter() {
+    const yearFilter = document.getElementById('filter-year');
+    if (!yearFilter) return;
+
+    // 儲存目前的選取值，避免重新整理清單時重置使用者的選取
+    const currentSelected = yearFilter.value;
+
+    // 從所有公告中提取 created_at 的年份
+    const years = allPosts.map(post => {
+        return new Date(post.created_at).getFullYear();
+    });
+
+    // 利用 Set 去除重複年份，並由大到小排序（例如 2026, 2025, 2024）
+    const uniqueYears = [...new Set(years)].sort((a, b) => b - a);
+
+    // 初始化下拉選單（保留全部年份）
+    let optionsHtml = '<option value="all">全部年份</option>';
+    uniqueYears.forEach(year => {
+        optionsHtml += `<option value="${year}">${year} 年</option>`;
+    });
+
+    yearFilter.innerHTML = optionsHtml;
+
+    // 還原使用者的選取值（如果該年份依然存在）
+    if (uniqueYears.includes(parseInt(currentSelected))) {
+        yearFilter.value = currentSelected;
+    } else {
+        yearFilter.value = "all";
+    }
+}
+
+// 3. 多條件交叉過濾與 HTML 渲染
+function filterPosts() {
+    const listDiv = document.getElementById('posts-list');
+    const selectedYear = document.getElementById('filter-year').value;
+    const selectedCategory = document.getElementById('filter-category').value;
+
+    // 進行交叉篩選
+    const filtered = allPosts.filter(post => {
+        const postYear = new Date(post.created_at).getFullYear().toString();
+        const postCategory = post.category || 'general';
+
+        const matchYear = (selectedYear === 'all' || postYear === selectedYear);
+        const matchCategory = (selectedCategory === 'all' || postCategory === selectedCategory);
+
+        return matchYear && matchCategory;
+    });
+
+    // 如果篩選後沒有任何資料
+    if (filtered.length === 0) {
+        listDiv.innerHTML = '<div class="text-center p-5 text-muted bg-white shadow-sm rounded">查無符合條件的公告資料。</div>';
+        return;
+    }
+
+    // 開始渲染符合條件的資料
+    listDiv.innerHTML = '';
+    filtered.forEach(post => {
+        // 為了避免 content 內文含有單引號、雙引號或換行造成 JS 傳參錯誤
+        // 將 post 物件字串化，並將雙引號轉義，以便安全傳入 openEditModal
+        const postStr = JSON.stringify(post).replace(/"/g, '&quot;');
+
+        listDiv.innerHTML += `
+            <div class="card post-card shadow-sm p-3 mb-3 bg-white">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <span class="category-badge bg-${post.category || 'general'} mb-2 d-inline-block">${catNames[post.category] || '未分類'}</span>
+                        <h5 class="mb-1 fw-bold text-dark">${post.title}</h5>
+                        <small class="text-muted"><i class="bi bi-clock me-1"></i>${new Date(post.created_at).toLocaleDateString()}</small>
                     </div>
-                </div>`;
-        });
-    }
+                    <div class="col-auto">
+                        <button class="btn btn-outline-primary btn-sm me-1" onclick="openEditModalByStr('${postStr}')"><i class="bi bi-pencil"></i> 編輯</button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="handleDelete(${post.id})"><i class="bi bi-trash"></i> 刪除</button>
+                    </div>
+                </div>
+            </div>`;
+    });
+}
 
-    function openAddModal() {
-        document.getElementById('modalTitle').innerText = "新增公告"; document.getElementById('saveBtn').innerText = "立即發佈";
-        document.getElementById('edit-id').value = ""; document.getElementById('edit-title').value = "";
-        document.getElementById('edit-text').value = ""; document.getElementById('edit-category').value = "general";
-        editModal.show();
-    }
+// 優化後的編輯 Modal 開啟方式：透過完整物件避免字串換行與脫模錯誤
+function openEditModalByStr(postStr) {
+    // 若傳入的是 JSON 字串，則解析回物件
+    const post = typeof postStr === 'string' ? JSON.parse(postStr.replace(/&quot;/g, '"')) : postStr;
+    
+    document.getElementById('modalTitle').innerText = "編輯公告";
+    document.getElementById('saveBtn').innerText = "儲存修改";
+    document.getElementById('edit-id').value = post.id;
+    document.getElementById('edit-title').value = post.title;
+    document.getElementById('edit-text').value = post.content || "";
+    document.getElementById('edit-category').value = post.category || "general";
+    
+    editModal.show();
+}
 
-    function openEditModal(id, title, content, category) {
-        document.getElementById('modalTitle').innerText = "編輯公告"; document.getElementById('saveBtn').innerText = "儲存修改";
-        document.getElementById('edit-id').value = id; document.getElementById('edit-title').value = title;
-        document.getElementById('edit-text').value = content; document.getElementById('edit-category').value = category || "general";
-        editModal.show();
-    }
+// 原本的新增 Modal 保持不變
+function openAddModal() {
+    document.getElementById('modalTitle').innerText = "新增公告";
+    document.getElementById('saveBtn').innerText = "立即發佈";
+    document.getElementById('edit-id').value = "";
+    document.getElementById('edit-title').value = "";
+    document.getElementById('edit-text').value = "";
+    document.getElementById('edit-category').value = "general";
+    
+    editModal.show();
+}
 
-    async function submitSave() {
-        const id = document.getElementById('edit-id').value; const title = document.getElementById('edit-title').value;
-        const content = document.getElementById('edit-text').value; const category = document.getElementById('edit-category').value;
-        if (!title || !content) return alert("請填寫標題與內容");
-        const payload = { title, content, category };
-        let { error } = id ? await _supabase.from('posts').update(payload).eq('id', id) : await _supabase.from('posts').insert([payload]);
-        if (error) alert("操作失敗：" + error.message); else { editModal.hide(); loadPosts(); }
+// 儲存與修改（儲存完畢後會調用 loadPosts() 重新載入最新狀態與年份）
+async function submitSave() {
+    const id = document.getElementById('edit-id').value;
+    const title = document.getElementById('edit-title').value;
+    const content = document.getElementById('edit-text').value;
+    const category = document.getElementById('edit-category').value;
+    
+    if (!title || !content) return alert("請填寫標題與內容");
+    
+    const payload = { title, content, category };
+    let { error } = id ? await _supabase.from('posts').update(payload).eq('id', id) : await _supabase.from('posts').insert([payload]);
+    
+    if (error) {
+        alert("操作失敗：" + error.message);
+    } else {
+        editModal.hide();
+        loadPosts(); // 重新整理完整全域資料與年份
     }
+}
 
-    async function handleDelete(id) {
-        if (!confirm("確定要刪除這則公告嗎？")) return;
-        await _supabase.from('posts').delete().eq('id', id); loadPosts();
-    }
+// 刪除公告
+async function handleDelete(id) {
+    if (!confirm("確定要刪除這則公告嗎？")) return;
+    const { error } = await _supabase.from('posts').delete().eq('id', id);
+    if (error) alert("刪除失敗：" + error.message); else loadPosts();
+}
 
     /* ==========================================
        2. 會員管理 邏輯
