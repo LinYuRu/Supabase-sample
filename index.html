@@ -10,111 +10,128 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <style>
-    body { background-color: #f4f6f9; }
-
-    /* ==========================================
-       通用導覽方塊 (Nav-Box) 改版基礎樣式
-       ========================================== */
-    .nav-box {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 20px 10px;
-        text-decoration: none;
-        border-radius: 12px;
-        border: 1px solid;
-        transition: all 0.25s ease-in-out;
-        height: 100%;
-        position: relative;
-        overflow: hidden;
+    .post-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: none;
+        border-left: 5px solid var(--primary-color);
     }
-    .nav-box i {
-        font-size: 2rem;
-        margin-bottom: 8px;
-        transition: transform 0.25s ease;
-    }
-    .nav-box span {
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-    /* 懸浮微動態效果 */
-    .nav-box:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.08);
-    }
-    .nav-box:hover i {
-        transform: scale(1.15);
+    .post-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
     }
 
-    /* 標題設定 */
-    .section-title-life { color: #198754; font-weight: 700; }
-    .section-title-affairs { color: #0d6efd; font-weight: 700; }
+    .category-badge { font-size: 0.75rem; padding: 0.3em 0.8em; border-radius: 50px; }
+    .bg-general { background-color: #e9ecef; color: #495057; }
+    .bg-event { background-color: #cfe2ff; color: #084298; }
+    .bg-member { background-color: #d1e7dd; color: #0f5132; }
+    .bg-rules { background-color: #fff3cd; color: #664d03; }
+
+    #admin-content { display: none; margin-top: 40px; margin-bottom: 60px; }
+body { background-color: #f4f6f9; }
+
+/* ==========================================
+   通用導覽方塊 (Nav-Box) 改版基礎樣式
+   ========================================== */
+.nav-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 10px;
+    text-decoration: none;
+    border-radius: 12px;
+    border: 1px solid;
+    transition: all 0.25s ease-in-out;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+.nav-box i {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    transition: transform 0.25s ease;
+}
+.nav-box span {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+/* 懸浮微動態效果 */
+.nav-box:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+}
+.nav-box:hover i {
+    transform: scale(1.15);
+}
+
+/* 標題設定 */
+.section-title-life { color: #198754; font-weight: 700; }
+.section-title-affairs { color: #0d6efd; font-weight: 700; }
 
 
-    /* ==========================================
-       【自訂按鈕色彩系統】每個按鈕不同底色且不重複
-       ========================================== */
-    
-    /* 1. 跑者廣場 (翡翠綠) */
-    .btn-color-square { background-color: #f2faf6; border-color: #d1e7dd; color: #198754; }
-    .btn-color-square span { color: #146c43; }
-    .btn-color-square:hover { background-color: #e2f4ec; }
+/* ==========================================
+   【自訂按鈕色彩系統】每個按鈕不同底色且不重複
+   ========================================== */
 
-    /* 2. 永和馬拉松路跑賽專輯 (薄荷青) */
-    .btn-color-album { background-color: #f0fdfa; border-color: #ccfbf1; color: #0d9488; }
-    .btn-color-album span { color: #115e59; }
-    .btn-color-album:hover { background-color: #e0f2fe; }
+/* 1. 跑者廣場 (翡翠綠) */
+.btn-color-square { background-color: #f2faf6; border-color: #d1e7dd; color: #198754; }
+.btn-color-square span { color: #146c43; }
+.btn-color-square:hover { background-color: #e2f4ec; }
 
-    /* 3. Instagram (保留官方粉紅) */
-    .box-ig { background-color: #fff0f5; border-color: #fcdbe7; color: #e1306c; }
-    .box-ig span { color: #a91b4b; }
-    .box-ig:hover { background-color: #fde2ec; }
+/* 2. 永和馬拉松路跑賽專輯 (薄荷青) */
+.btn-color-album { background-color: #f0fdfa; border-color: #ccfbf1; color: #0d9488; }
+.btn-color-album span { color: #115e59; }
+.btn-color-album:hover { background-color: #e0f2fe; }
 
-    /* 4. Facebook (保留官方經典藍) */
-    .box-fb { background-color: #f0f4fc; border-color: #d2e0f9; color: #1877f2; }
-    .box-fb span { color: #1154aa; }
-    .box-fb:hover { background-color: #e2ebfa; }
+/* 3. Instagram (保留官方粉紅) */
+.box-ig { background-color: #fff0f5; border-color: #fcdbe7; color: #e1306c; }
+.box-ig span { color: #a91b4b; }
+.box-ig:hover { background-color: #fde2ec; }
 
-    /* 5. 成立簡介 (珊瑚淡紅) */
-    .btn-color-start { background-color: #fff5f5; border-color: #ffe3e3; color: #e03131; }
-    .btn-color-start span { color: #c92a2a; }
-    .btn-color-start:hover { background-color: #ffe8e8; }
+/* 4. Facebook (保留官方經典藍) */
+.box-fb { background-color: #f0f4fc; border-color: #d2e0f9; color: #1877f2; }
+.box-fb span { color: #1154aa; }
+.box-fb:hover { background-color: #e2ebfa; }
 
-    /* 6. 創會故事 (陽光暖橙) */
-    .btn-color-story { background-color: #fff9db; border-color: #fff3bf; color: #f08c00; }
-    .btn-color-story span { color: #e67e22; }
-    .btn-color-story:hover { background-color: #fff0b6; }
+/* 5. 成立簡介 (珊瑚淡紅) */
+.btn-color-start { background-color: #fff5f5; border-color: #ffe3e3; color: #e03131; }
+.btn-color-start span { color: #c92a2a; }
+.btn-color-start:hover { background-color: #ffe8e8; }
 
-    /* 7. 委員會章則 (沉穩商務藍) */
-    .btn-color-rights { background-color: #edf2ff; border-color: #dbe4ff; color: #4263eb; }
-    .btn-color-rights span { color: #364fc7; }
-    .btn-color-rights:hover { background-color: #bac8ff; }
+/* 6. 創會故事 (陽光暖橙) */
+.btn-color-story { background-color: #fff9db; border-color: #fff3bf; color: #f08c00; }
+.btn-color-story span { color: #e67e22; }
+.btn-color-story:hover { background-color: #fff0b6; }
 
-    /* 8. 獎勵辦法 (琥珀暖金) */
-    .btn-color-rewards { background-color: #fff9f0; border-color: #ffecb5; color: #d94111; }
-    .btn-color-rewards span { color: #b23b00; }
-    .btn-color-rewards:hover { background-color: #fff3cd; }
+/* 7. 委員會章則 (沉穩商務藍) */
+.btn-color-rights { background-color: #edf2ff; border-color: #dbe4ff; color: #4263eb; }
+.btn-color-rights span { color: #364fc7; }
+.btn-color-rights:hover { background-color: #bac8ff; }
 
-    /* 9. 會員紀律 (丁香極淺紫) */
-    .btn-color-discipline { background-color: #f8f0fc; border-color: #f3d9fa; color: #ae3ec9; }
-    .btn-color-discipline span { color: #862e9c; }
-    .btn-color-discipline:hover { background-color: #f3ccf3; }
+/* 8. 獎勵辦法 (琥珀暖金) */
+.btn-color-rewards { background-color: #fff9f0; border-color: #ffecb5; color: #d94111; }
+.btn-color-rewards span { color: #b23b00; }
+.btn-color-rewards:hover { background-color: #fff3cd; }
 
-    /* 10. 會員申請 (天空冰藍) */
-    .btn-color-apply { background-color: #e3fafc; border-color: #c5f6fa; color: #0b7285; }
-    .btn-color-apply span { color: #09677a; }
-    .btn-color-apply:hover { background-color: #91e7f6; }
+/* 9. 會員紀律 (丁香極淺紫) */
+.btn-color-discipline { background-color: #f8f0fc; border-color: #f3d9fa; color: #ae3ec9; }
+.btn-color-discipline span { color: #862e9c; }
+.btn-color-discipline:hover { background-color: #f3ccf3; }
 
-    /* 11. 固定團練 (森林青草綠) */
-    .btn-color-schedule { background-color: #f4fce3; border-color: #e9fac8; color: #5c940d; }
-    .btn-color-schedule span { color: #4b7a0b; }
-    .btn-color-schedule:hover { background-color: #d8f5a2; }
+/* 10. 會員申請 (天空冰藍) */
+.btn-color-apply { background-color: #e3fafc; border-color: #c5f6fa; color: #0b7285; }
+.btn-color-apply span { color: #09677a; }
+.btn-color-apply:hover { background-color: #91e7f6; }
 
-    /* 12. 服務幹部資訊 (復古莫蘭迪灰綠) */
-    .btn-color-contact { background-color: #f1f3f5; border-color: #e9ecef; color: #495057; }
-    .btn-color-contact span { color: #343a40; }
-    .btn-color-contact:hover { background-color: #dee2e6; }
+/* 11. 固定團練 (森林青草綠) */
+.btn-color-schedule { background-color: #f4fce3; border-color: #e9fac8; color: #5c940d; }
+.btn-color-schedule span { color: #4b7a0b; }
+.btn-color-schedule:hover { background-color: #d8f5a2; }
+
+/* 12. 服務幹部資訊 (復古莫蘭迪灰綠) */
+.btn-color-contact { background-color: #f1f3f5; border-color: #e9ecef; color: #495057; }
+.btn-color-contact span { color: #343a40; }
+.btn-color-contact:hover { background-color: #dee2e6; }
 </style>
 <body class="p-5">
 <div id="clubCarousel" class="carousel slide shadow mb-5" data-bs-ride="carousel">
@@ -314,7 +331,6 @@
 
     // 定義代碼與中文名稱的對照表
     const categoryMapping = { 'general': '一般公告', 'event': '活動訊息', 'member': '會員專區', 'rules': '理監事會議紀錄' };
-
 async function loadPreview() {
     try {
         // 查詢包含 id, title, category, content, created_at
@@ -329,18 +345,41 @@ async function loadPreview() {
         const list = document.getElementById('preview-list');
         if (data && data.length > 0) {
             list.innerHTML = data.map(post => {
-                // 1. 先轉成 JSON 字串
-                let postStr = JSON.stringify(post);
-                // 2. 將反斜線、換行符號與雙引號進行特殊處理，避免破壞 HTML 屬性與 JS 語法
-                postStr = postStr
-                    .replace(/\\/g, '\\\\')    // 處理可能已存在的反斜線
-                    .replace(/"/g, '&quot;')   // 處理雙引號
-                    .replace(/\n/g, '\\n')     // 將真正的換行轉成字串文字 \n
-                    .replace(/\r/g, '\\r');    // 將真正的斷行回車轉成字串文字 \r
+                // 1. 轉換公告種類為中文文字
+                const categoryChinese = (typeof categoryMapping !== 'undefined' && categoryMapping[post.category])
+                                        || post.category
+                                        || '一般公告';
 
+                // 2. 依據公告種類動態決定 CSS 顏色樣式 (預設套用 bg-general)
+                let badgeColorClass = 'bg-general';
+                if (post.category === 'general') badgeColorClass = 'bg-general';
+                else if (post.category === 'event') badgeColorClass = 'bg-event';
+                else if (post.category === 'member') badgeColorClass = 'bg-member';
+                else if (post.category === 'rules') badgeColorClass = 'bg-rules';
+                else {
+                    // 防呆機制：如果 category 是中文（例如直接存「活動通知」），也可以比對對應樣式
+                    if (categoryChinese.includes('活動')) badgeColorClass = 'bg-event';
+                    else if (categoryChinese.includes('會員')) badgeColorClass = 'bg-member';
+                    else if (categoryChinese.includes('章則') || categoryChinese.includes('辦法') || categoryChinese.includes('紀律')) badgeColorClass = 'bg-rules';
+                }
+
+                // 3. 先將 post 物件轉成 JSON 字串
+                let postStr = JSON.stringify(post);
+                // 4. 處理換行符號與引號，防止遇到內文換行時 JS 語法崩潰 (Bad control character)
+                postStr = postStr
+                    .replace(/\\/g, '\\\\')
+                    .replace(/"/g, '&quot;')
+                    .replace(/\n/g, '\\n')
+                    .replace(/\r/g, '\\r');
+
+                // 5. 回傳套用全新 CSS 的 HTML 字串
                 return `
-                    <a href="javascript:void(0)" onclick="showAnnouncement('${postStr}')" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 px-4 border-0 border-bottom">
-                        <span class="fw-bold text-dark"><i class="bi bi-dot text-warning fs-4 align-middle"></i>${post.title}</span>
+                    <a href="javascript:void(0)" onclick="showAnnouncement('${postStr}')"
+                       class="post-card list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 px-4 mb-2 rounded shadow-sm text-decoration-none">
+                        <span class="text-dark d-flex align-items-center">
+                            <span class="category-badge ${badgeColorClass} me-3 fw-bold">${categoryChinese}</span>
+                            <span class="fw-bold text-truncate" style="max-width: 500px;">${post.title}</span>
+                        </span>
                         <small class="text-muted bg-light px-2 py-1 rounded-2">${new Date(post.created_at).toLocaleDateString()}</small>
                     </a>
                 `;
