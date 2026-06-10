@@ -79,8 +79,13 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-bold text-danger" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance-panel" type="button">
+                <button class="nav-link fw-bold text-danger" id="record-tab" data-bs-toggle="tab" data-bs-target="#attendance-panel" type="button">
                     <i class="bi bi-check2-square me-1"></i> 出席點名紀錄
+                </button>
+            </li>
+            <li class="page-item nav-item">
+                <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#cat-attendance" type="button" role="tab" aria-controls="cat-attendance" aria-selected="false">
+                    <i class="bi bi-calendar-check me-2"></i>出席紀錄報表
                 </button>
             </li>
         </ul>
@@ -211,7 +216,7 @@
                         <option value="general">一般公告</option>
                         <option value="event">活動訊息</option>
                         <option value="member">會員專區</option>
-                        <option value="rules">規章制度</option>
+                        <option value="rules">理監事會議紀錄</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -383,6 +388,92 @@
     </div>
 </div>
 
+<!--出席報表tab START-->
+<div class="tab-pane fade" id="cat-attendance" role="tabpanel" aria-labelledby="attendance-tab">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 bg-light p-3 rounded border">
+        <div class="row g-2 align-items-center flex-grow-1 me-md-2" style="max-width: 80%;">
+            <div class="col-12 col-md-4">
+                <input type="text" id="attendance-search" class="form-control" placeholder="搜尋姓名、組別、活動名稱...">
+            </div>
+            <div class="col-4 col-md-2">
+                <select id="attendance-year-filter" class="form-select">
+                    <option value="all">全部年份</option>
+                </select>
+            </div>
+            <div class="col-4 col-md-2">
+                <select id="attendance-month-filter" class="form-select">
+                    <option value="all">全部月份</option>
+                </select>
+            </div>
+            <div class="col-4 col-md-2">
+                <select id="attendance-group-filter" class="form-select">
+                    <option value="all">全部組別</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-success" onclick="exportAttendanceCsv()">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>匯出報表
+            </button>
+            <button class="btn btn-primary" onclick="loadAttendanceReport()">
+                <i class="bi bi-arrow-clockwise me-1"></i>重新整理
+            </button>
+        </div>
+    </div>
+    
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-start border-primary border-4 shadow-sm">
+                <div class="card-body py-3">
+                    <h6 class="card-subtitle text-muted mb-1 small fw-bold">本月應出席總人次</h6>
+                    <h3 class="card-title mb-0 fw-bold text-primary" id="stat-total-expected">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-start border-success border-4 shadow-sm">
+                <div class="card-body py-3">
+                    <h6 class="card-subtitle text-muted mb-1 small fw-bold">實際出席人次 (出席率)</h6>
+                    <h3 class="card-title mb-0 fw-bold text-success" id="stat-actual-attended">0 <span class="fs-6 fw-normal text-muted" id="stat-attendance-rate">(0%)</span></h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-start border-danger border-4 shadow-sm">
+                <div class="card-body py-3">
+                    <h6 class="card-subtitle text-muted mb-1 small fw-bold">請假 / 缺席人次</h6>
+                    <h3 class="card-title mb-0 fw-bold text-danger" id="stat-total-absent">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="table-responsive bg-white rounded shadow-sm border p-3">
+        <table class="table table-hover align-middle" id="attendance-table">
+            <thead class="table-light">
+            <tr>
+                <th>姓名</th>
+                <th>組別</th>
+                <th>活動名稱 / 日期</th>
+                <th>簽到時間</th>
+                <th>狀態</th>
+                <th>備註/請假事由</th>
+            </tr>
+            </thead>
+            <tbody id="attendance-list">
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                    正在載入出席紀錄數據...
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<!--出席報表tab END-->
+
 <script>
     const SUPABASE_URL = 'https://awenxjiniepxbnbxdefl.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
@@ -401,8 +492,10 @@
     let editModal, memberModal, activityModal;
     let currentMemberId = null;
     let currentActivityId = null;
+    // 全域變數暫存出席原始資料FOR報表
+    let rawAttendanceData = [];
 
-    const catNames = { 'general': '一般公告', 'event': '活動訊息', 'member': '會員專區', 'rules': '規章制度' };
+    const catNames = { 'general': '一般公告', 'event': '活動訊息', 'member': '會員專區', 'rules': '理監事會議紀錄' };
 
     document.addEventListener('DOMContentLoaded', () => {
         editModal = new bootstrap.Modal(document.getElementById('editModal'));
@@ -413,9 +506,10 @@
         document.getElementById('activities-tab').addEventListener('shown.bs.tab', () => loadActivities());
 
         // 切換到點名 Tab 時，初始化活動下拉選單
-        document.getElementById('attendance-tab').addEventListener('shown.bs.tab', () => loadAttendanceActivitiesDropdown());
+        document.getElementById('record-tab').addEventListener('shown.bs.tab', () => loadAttendanceActivitiesDropdown());
 
         checkSession();
+        initAttendanceTab();
     });
     
 	document.addEventListener('DOMContentLoaded', function() {
@@ -1249,6 +1343,277 @@ async function handleMemberDelete(id, name) {
             saveBtn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i> 儲存本次點名紀錄';
         }
     }
+
+/**
+ * 1. 初始化出席紀錄頁籤（綁定事件監聽）
+ */
+function initAttendanceTab() {
+    // 綁定輸入搜尋與各下拉選單的即時過濾事件（前端即時交叉過濾，免重複讀取資料庫）
+    $(document).on('input', '#attendance-search', applyAttendanceFilters);
+    $(document).on('change', '#attendance-year-filter', applyAttendanceFilters);
+    $(document).on('change', '#attendance-month-filter', applyAttendanceFilters);
+    $(document).on('change', '#attendance-group-filter', applyAttendanceFilters);
+    
+    // 當切換到「出席紀錄報表」Tab 時，才進行第一次資料載入 (Lazy Loading)
+    $('#attendance-tab').on('shown.bs.tab', function () {
+        if (rawAttendanceData.length === 0) {
+            loadAttendanceReport();
+        }
+    });
+}
+
+/**
+ * 2. 從 Supabase 讀取出席紀錄（含關聯成員與活動資料）
+ */
+async function loadAttendanceReport() {
+    $('#attendance-list').html(`
+        <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                正在載入出席紀錄數據...
+            </td>
+        </tr>
+    `);
+
+    try {
+        // 利用 Supabase 關聯查詢 (Join) 同步撈出活動與會員欄位
+        const { data, error } = await _supabase
+            .from('attendance')
+            .select(`
+                id,
+                status,
+                notes,
+                created_at,
+                activities (
+                    title,
+                    activity_date,
+                    location,
+                    activity_type
+                ),
+                members (
+                    name,
+                    group_number,
+                    category
+                )
+            `);
+
+        if (error) throw error;
+
+        // 將資料存入全域變數，並依照活動日期由新到舊排序
+        rawAttendanceData = data || [];
+        rawAttendanceData.sort((a, b) => {
+            const dateA = a.activities?.activity_date || '';
+            const dateB = b.activities?.activity_date || '';
+            return dateB.localeCompare(dateA);
+        });
+
+        // 動態生成「年份」與「組別」與「月份」的下拉選單選項
+        buildDynamicFilters();
+
+        // 執行前端渲染與過濾
+        applyAttendanceFilters();
+
+    } catch (err) {
+        console.error("讀取出席紀錄失敗:", err);
+        $('#attendance-list').html(`
+            <tr>
+                <td colspan="6" class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>讀取資料時發生錯誤：${err.message}
+                </td>
+            </tr>
+        `);
+    }
+}
+
+/**
+ * 3. 動態建置年份、月份與組別選單（從現有資料中不重複收集）
+ */
+function buildDynamicFilters() {
+    const yearsSet = new Set();
+    const monthsSet = new Set(); // 存放 MM 格式
+    const groupsSet = new Set();
+
+    rawAttendanceData.forEach(item => {
+        const member = item.members || {};
+        const activity = item.activities || {};
+
+        // 收集年份與月份 (從活動日期 YYYY-MM-DD 拆解)
+        if (activity.activity_date) {
+            const parts = activity.activity_date.split('-'); // ["2026", "06", "10"]
+            if (parts[0]) yearsSet.add(parts[0]);
+            if (parts[1]) monthsSet.add(parts[1]);
+        }
+
+        // 收集組別 (排除 null / undefined)
+        if (member.group_number !== null && member.group_number !== undefined) {
+            groupsSet.add(member.group_number);
+        }
+    });
+
+    // A. 渲染年份下拉選單 (由大到小排序)
+    const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+    let yearHtml = '<option value="all">全部年份</option>';
+    sortedYears.forEach(y => { yearHtml += `<option value="${y}">${y} 年</option>`; });
+    $('#attendance-year-filter').html(yearHtml);
+
+    // B. 渲染月份下拉選單 (固定 01 ~ 12 月，或者依據現有資料收集，這裡採用固定 1~12 月更直覺)
+    let monthHtml = '<option value="all">全部月份</option>';
+    for (let m = 1; m <= 12; m++) {
+        const mStr = String(m).padStart(2, '0');
+        monthHtml += `<option value="${mStr}">${m} 月</option>`;
+    }
+    $('#attendance-month-filter').html(monthHtml);
+
+    // C. 渲染組別下拉選單 (由小到大排序)
+    const sortedGroups = Array.from(groupsSet).sort((a, b) => a - b);
+    let groupHtml = '<option value="all">全部組別</option>';
+    sortedGroups.forEach(g => {
+        let gName = (typeof groupMap !== 'undefined' && groupMap.has(String(g)))
+            ? groupMap.get(String(g))
+            : g + '組';
+        groupHtml += `<option value="${g}">${gName}</option>`;
+    });
+    $('#attendance-group-filter').html(groupHtml);
+}
+
+/**
+ * 4. 複合四條件過濾 (關鍵字 + 年份 + 月份 + 組別) 與統計計算
+ */
+function applyAttendanceFilters() {
+    const keyword = $('#attendance-search').val().trim().toLowerCase();
+    const selectedYear = $('#attendance-year-filter').val();
+    const selectedMonth = $('#attendance-month-filter').val();
+    const selectedGroup = $('#attendance-group-filter').val();
+
+    // 進行多條件前端交叉篩選
+    let filtered = rawAttendanceData.filter(item => {
+        const member = item.members || {};
+        const activity = item.activities || {};
+        
+        // A. 年份過濾
+        if (selectedYear !== 'all' && activity.activity_date) {
+            if (!activity.activity_date.startsWith(selectedYear)) return false;
+        }
+
+        // B. 月份過濾 (檢查活動日期 YYYY-MM-DD 的 MM 部分)
+        if (selectedMonth !== 'all' && activity.activity_date) {
+            const parts = activity.activity_date.split('-');
+            if (parts[1] !== selectedMonth) return false;
+        }
+
+        // C. 組別過濾
+        if (selectedGroup !== 'all') {
+            if (String(member.group_number) !== selectedGroup) return false;
+        }
+
+        // D. 關鍵字搜尋 (比對姓名、組別、活動名稱、備註)
+        if (keyword) {
+            const name = (member.name || '').toLowerCase();
+            const group = String(member.group_number || '');
+            const title = (activity.title || '').toLowerCase();
+            const notes = (item.notes || '').toLowerCase();
+            
+            if (!name.includes(keyword) && !group.includes(keyword) && !title.includes(keyword) && !notes.includes(keyword)) {
+                return false;
+            }
+        }
+        return true;
+    });
+
+    // 5. 更新上方儀表板統計數據
+    const totalExpected = filtered.length;
+    const attendedCount = filtered.filter(i => i.status === '出席' || i.status === 'Attended' || i.status === 'Present').length;
+    const absentCount = totalExpected - attendedCount;
+    const rate = totalExpected > 0 ? Math.round((attendedCount / totalExpected) * 100) : 0;
+
+    $('#stat-total-expected').text(totalExpected);
+    $('#stat-actual-attended').html(`${attendedCount} <span class="fs-6 fw-normal text-muted">(${rate}%)</span>`);
+    $('#stat-total-absent').text(absentCount);
+
+    // 6. 開始渲染 HTML 表格
+    if (filtered.length === 0) {
+        $('#attendance-list').html(`<tr><td colspan="6" class="text-center text-muted py-4">查無符合條件的出席紀錄</td></tr>`);
+        return;
+    }
+
+    let html = '';
+    $.each(filtered, function(index, item) {
+        const member = item.members || {};
+        const activity = item.activities || {};
+
+        // 轉換組別文字顯示
+        let displayGroup = '-';
+        if (member.group_number !== null && member.group_number !== undefined) {
+            displayGroup = (typeof groupMap !== 'undefined' && groupMap.has(String(member.group_number)))
+                ? groupMap.get(String(member.group_number))
+                : member.group_number + '組';
+        }
+
+        // 依據 status 狀態顯示 Badge
+        let statusBadge = '';
+        const statusStr = item.status || 'Registered';
+        if (statusStr === '出席' || statusStr === 'Attended' || statusStr === 'Present') {
+            statusBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle">準時出席</span>`;
+        } else if (statusStr === '請假' || statusStr === 'Leave') {
+            statusBadge = `<span class="badge bg-warning-subtle text-warning border border-warning-subtle">請假</span>`;
+        } else if (statusStr === 'Registered') {
+            statusBadge = `<span class="badge bg-info-subtle text-info border border-info-subtle">已報名</span>`;
+        } else {
+            statusBadge = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle">缺席</span>`;
+        }
+
+        const displayActivity = activity.title ? `${activity.title} <small class="text-muted">(${activity.activity_date || ''})</small>` : '-';
+        const displayCheckIn = item.created_at ? new Date(item.created_at).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit'}) : '-';
+
+        html += `
+            <tr>
+                <td><strong>${member.name || '-'}</strong></td>
+                <td>${displayGroup}</td>
+                <td>${displayActivity}</td>
+                <td><span class="text-monospace">${displayCheckIn}</span></td>
+                <td>${statusBadge}</td>
+                <td class="text-muted small">${item.notes || '-'}</td>
+            </tr>
+        `;
+    });
+
+    $('#attendance-list').html(html);
+}
+
+/**
+ * 5. 匯出目前表格內過濾好的出席報表 CSV (同步支援全新篩選結果)
+ */
+function exportAttendanceCsv() {
+    if (rawAttendanceData.length === 0) return alert("目前沒有數據可供匯出");
+    
+    let csvContent = "\uFEFF"; // 解決 Excel 中文亂碼 (BOM)
+    csvContent += "姓名,組別,活動資訊,時間,狀態,備註\n";
+
+    $('#attendance-list tr').each(function() {
+        let rowData = [];
+        $(this).find('td').each(function() {
+            let text = $(this).text().trim().replace(/"/g, '""');
+            rowData.push(`"${text}"`);
+        });
+        if (rowData.length > 0) {
+            csvContent += rowData.join(",") + "\n";
+        }
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `出席紀錄報表_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+$(document).ready(function() {
+    initAttendanceTab();
+});
+
 </script>
 </body>
 </html>

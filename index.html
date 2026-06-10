@@ -266,8 +266,41 @@
             </div>
         </div>
     </div>
-
 </div>
+<!--首頁HTML END-->
+
+<!--公告START-->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg"> <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-dark text-white">
+            <h5 class="modal-title" id="modalTitle">檢視公告</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+            <input type="hidden" id="edit-id">
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold text-muted small">公告種類</label>
+                <div id="view-category" class="p-2 bg-light border rounded fw-bold text-secondary"></div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold text-muted small">標題</label>
+                <div id="view-title" class="p-2 bg-light border rounded fs-5 fw-bold text-dark"></div>
+            </div>
+            
+            <div class="mb-0">
+                <label class="form-label fw-bold text-muted small">內容</label>
+                <div id="view-text" class="p-3 bg-light border rounded text-dark" style="min-height: 200px; white-space: pre-wrap; overflow-y: auto;"></div>
+            </div>
+        </div>
+        <div class="modal-footer bg-light" id="modalFooter">
+            <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">關閉</button>
+        </div>
+    </div>
+    </div>
+</div>
+<!--公告END-->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -276,51 +309,85 @@
         const SUPABASE_URL = 'https://awenxjiniepxbnbxdefl.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // 全域宣告公告變數
+    let editModalInstance = null;
 
-    // 負責拉取 Supabase 公告資料的動態函式
-    async function loadPreview() {
-        try {
-            const { data, error } = await _supabase
-                .from('posts')
-                .select('title, created_at')
-                .order('created_at', { ascending: false }) // 依建立時間由新到舊排序
-                .limit(3);     // 限制只取前 3 筆
-                
-            if (error) throw error; // 若 Supabase 查詢有錯則拋出異常
+    // 定義代碼與中文名稱的對照表
+    const categoryMapping = { 'general': '一般公告', 'event': '活動訊息', 'member': '會員專區', 'rules': '理監事會議紀錄' };
 
-            const list = document.getElementById('preview-list');
-            if (data && data.length > 0) {
-                list.innerHTML = data.map(post => `
-                    <a href="resources/announcements.html" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 px-4 border-0 border-bottom">
+async function loadPreview() {
+    try {
+        // 查詢包含 id, title, category, content, created_at
+        const { data, error } = await _supabase
+            .from('posts')
+            .select('id, title, category, content, created_at')
+            .order('created_at', { ascending: false })
+            .limit(3);
+            
+        if (error) throw error;
+        
+        const list = document.getElementById('preview-list');
+        if (data && data.length > 0) {
+            list.innerHTML = data.map(post => {
+                const postStr = JSON.stringify(post).replace(/"/g, '&quot;');
+                return `
+                    <a href="javascript:void(0)" onclick="showAnnouncement('${postStr}')" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 px-4 border-0 border-bottom">
                         <span class="fw-bold text-dark"><i class="bi bi-dot text-warning fs-4 align-middle"></i>${post.title}</span>
                         <small class="text-muted bg-light px-2 py-1 rounded-2">${new Date(post.created_at).toLocaleDateString()}</small>
                     </a>
-                `).join('');
-            } else {
-                document.getElementById('preview-list').innerHTML = '<div class="p-4 text-center text-muted">目前暫無最新公告</div>';
-            }
-        } catch (e) {
-            console.error("載入最新公告發生錯誤:", e);
+                `;
+            }).join('');
+        } else {
+            document.getElementById('preview-list').innerHTML = '<div class="p-4 text-center text-muted">目前暫無最新公告</div>';
         }
+    } catch (e) {
+        console.error("載入最新公告發生錯誤:", e);
     }
+}
 
-    // 當 DOM 樹準備完畢後執行動態功能
-    document.addEventListener('DOMContentLoaded', async function() {
-        
-        // 1. 執行並等待 Supabase 公告渲染完畢
-        await loadPreview();
+// 點擊後將資料送入各 div 並顯示彈出視窗
+function showAnnouncement(postStr) {
+    const post = JSON.parse(postStr);
+    
+    // 1. 寫入隱藏的 ID 欄位（保留給可能有需要的背景邏輯）
+    document.getElementById('edit-id').value = post.id || '';
+    
+    // 2. 將轉換後的「種類中文文字」放入對應的 div
+    const categoryChinese = categoryMapping[post.category] || post.category || '一般公告';
+    document.getElementById('view-category').innerText = categoryChinese;
+    
+    // 3. 將「標題」放入對應的 div
+    document.getElementById('view-title').innerText = post.title || '';
+    
+    // 4. 將「內容」放入對應的 div
+    // 如果內容有支援 HTML 標籤使用 innerHTML；如果是純文字安全考量建議用 innerText
+    // 這裡沿用您的備註（支援 HTML 標籤）故使用 innerHTML
+    document.getElementById('view-text').innerHTML = post.content || '<span class="text-muted">（無內文）</span>';
+    
+    // 5. 顯示彈出視窗
+    if (!editModalInstance) {
+        editModalInstance = new bootstrap.Modal(document.getElementById('editModal'));
+    }
+    editModalInstance.show();
+}
 
-        // 2. 自動聚焦平滑滾動到最新公告
-        const targetSection = document.getElementById('latest-announcements');
-        if (targetSection) {
-            setTimeout(() => {
-                targetSection.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-            }, 250);
-        }
-    });
-    </script>
+// 監聽 DOM 載入
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadPreview();
+    
+    editModalInstance = new bootstrap.Modal(document.getElementById('editModal'));
+
+    const targetSection = document.getElementById('latest-announcements');
+    if (targetSection) {
+        setTimeout(() => {
+            targetSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }, 250);
+    }
+});
+
+</script>
 </body>
 </html>
