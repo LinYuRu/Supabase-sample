@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>永和慢跑 - 最新公告全覽</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 900px; margin-top: 50px; margin-bottom: 50px; }
+        .nav-tabs .nav-link { color: #495057; font-weight: bold; }
+        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; }
+        /* 文字排版微調 */
+        .tab-pane {
+            line-height: 1.8;
+            color: #333;
+        }
+        .badge {
+            padding: 0.5em 0.8em;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: #f0f7ff;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="mb-4">
+        <a href="../index2.html" class="btn btn-success text-white">← 返回首頁</a>
+        <a href="./page1.html" class="btn btn-primary text-white">關於永慢</a>
+        <a href="./page2.html" class="btn btn-info text-dark">會務公告</a>
+<!--        <a href="./page3.html" class="btn btn-warning text-dark">定點團練</a>-->
+        <a href="./page5.html" class="btn btn-danger text-white">獎勵辦法</a>
+        <a href="./page6.html" class="btn btn-dark text-white">加入我們</a>
+        <a href="./DbLife.html" class="btn btn-outline-primary border-2 fw-bold">永慢龍舟隊</a>
+        <h1 class="fw-bold">會員服務</h1>
+    </div>
+    
+    <ul class="nav nav-tabs mb-4" id="announcementTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cat-story" type="button">會員編組</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-start" id="attendance-tab">勤跑紀錄</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-discipline" type="button">權利義務</button>
+        </li>
+    </ul>
+    
+    <div class="tab-content bg-white p-4 rounded shadow-sm border">
+        
+        <div class="tab-pane fade show active" id="cat-story">
+            <div class="row">
+                <div class="col-lg-8">
+                    <h3 class="fw-bold text-primary mb-4">會員編組</h3>
+                </div>
+            </div>
+        </div>
+        
+
+        
+        <!--出席報表tab START-->
+        <div class="tab-pane fade" id="cat-start" role="tabpanel" aria-labelledby="attendance-tab">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 bg-light p-3 rounded border">
+                <h3 class="fw-bold text-primary mb-4">勤跑紀錄</h3>
+                <div class="row g-2 align-items-center flex-grow-1 me-md-2" style="max-width: 80%;">
+                    <div class="col-4 col-md-2">
+                        <select id="attendance-year-filter" class="form-select">
+                            <option value="all">全部年份</option>
+                        </select>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <select id="attendance-month-filter" class="form-select">
+                            <option value="all">全部月份</option>
+                        </select>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <select id="attendance-group-filter" class="form-select">
+                            <option value="all">全部組別</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" onclick="loadAttendanceReport()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>重新整理
+                    </button>
+                </div>
+            </div>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card border-start border-primary border-4 shadow-sm">
+                        <div class="card-body py-3">
+                            <h6 class="card-subtitle text-muted mb-1 small fw-bold">本月應出席總人次</h6>
+                            <h3 class="card-title mb-0 fw-bold text-primary" id="stat-total-expected">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-start border-success border-4 shadow-sm">
+                        <div class="card-body py-3">
+                            <h6 class="card-subtitle text-muted mb-1 small fw-bold">實際出席人次 (出席率)</h6>
+                            <h3 class="card-title mb-0 fw-bold text-success" id="stat-actual-attended">0 <span class="fs-6 fw-normal text-muted" id="stat-attendance-rate">(0%)</span></h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-start border-danger border-4 shadow-sm">
+                        <div class="card-body py-3">
+                            <h6 class="card-subtitle text-muted mb-1 small fw-bold">請假 / 缺席人次</h6>
+                            <h3 class="card-title mb-0 fw-bold text-danger" id="stat-total-absent">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-responsive bg-white rounded shadow-sm border p-3">
+                <table class="table table-hover align-middle" id="attendance-table">
+                    <thead class="table-light">
+                    <tr>
+                        <th>姓名</th>
+                        <th>組別</th>
+                        <th>活動名稱 / 日期</th>
+                        <th>狀態</th>
+                    </tr>
+                    </thead>
+                    <tbody id="attendance-list">
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                            正在載入出席紀錄數據...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!--出席報表tab END-->
+        
+        
+        <div class="tab-pane fade" id="cat-discipline">
+            <h3 class="fw-bold text-primary mb-4">會員入會權利與義務</h3>
+            <p class="text-secondary mb-4">本會為維護優良傳統與團隊榮譽，全體會員應共同遵守以下紀律規範：</p>
+            
+            <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
+                <!-- 建議做法：在新分頁開啟，並嘗試下載 -->
+                <a href="../doc/right_dutty_1150704.pdf" target="_blank" download="永和慢跑會員權利義務.pdf" class="btn btn-primary">
+                    <i class="bi bi-download me-2"></i>永和慢跑會員權利義務 PDF
+                </a>
+            </div>
+            
+            <div class="accordion" id="disciplineAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">一、會員資格與應辦事項</button></h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#disciplineAccordion">
+                        <div class="accordion-body">
+                            <strong>學生會員規範：</strong>
+                            <ul>
+                                <li>大學學程（含）以下，年齡23歲以下之在學學生（不含進修/補習教育）。</li>
+                                <li>未滿18歲者，入會須檢附家長同意書。</li>
+                                <li>需提供有效在學證明。</li>
+                                <li>長青會員（入會滿二年且年齡滿75歲）與學生會員免繳常年會費。</li>
+                            </ul>
+                            <strong>入會後應辦事項：</strong>
+                            <ol>
+                                <li>向服裝組領取會服。</li>
+                                <li>建立團報個人帳戶。</li>
+                                <li>加入各類資訊群組（會務、聊天、訓練、報名等）。</li>
+                                <li>追蹤官方社群（FB、IG、官網）。</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">二、會員權利</button></h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#disciplineAccordion">
+                        <div class="accordion-body">
+                            <ul>
+                                <li>參與各項團練與賽事團報服務。</li>
+                                <li>享有教練訓練課表與相關資源。</li>
+                                <li>表現優異者可依獎勵辦法申請獎勵，或受遴選代表參賽。</li>
+                                <li>年度旅遊與年會餐費補助（依年度公告）。</li>
+                                <li>年度「勤跑獎」資格申請。</li>
+                                <li>擔任團練領隊可申請補給費補助。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">三、會員義務與紀律</button></h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#disciplineAccordion">
+                        <div class="accordion-body">
+                            <ul>
+                                <li><strong>服裝規範：</strong>參與團練及賽事應穿著會服（未穿著則不列入出勤紀錄）。</li>
+                                <li><strong>團體紀律：</strong>遵守群組規範，賽事禁止作弊或抄捷徑。</li>
+                                <li><strong>會務參與：</strong>鼓勵協助團練運作與認領領隊職務。</li>
+                                <li><strong>會費繳納：</strong>每年會員大會繳交年費1,000元，4月底前未繳費者視同喪失會員資格。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">四、團練領隊制度</button></h2>
+                    <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#disciplineAccordion">
+                        <div class="accordion-body">
+                            <p><strong>領隊產生方式：</strong>自由認領制、組別輪值制、幹部協調制。</p>
+                            <p><strong>主要工作事項：</strong>協助確認團練資訊、公告提醒、準備簽到表、維持安全與時間掌控、登錄出席人數。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-light rounded text-muted small">
+                <p><strong>附則：</strong>本辦法依本會章程訂定，經理監事聯席會議通過後施行。如有未盡事宜，依本會章程及相關規定辦理。</p>
+                <p><em>修訂紀錄：中華民國115年6月27日訂定（第12屆第2次理監事會議通過）。</em></p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    
+    const SUPABASE_URL = 'https://awenxjiniepxbnbxdefl.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const groupMap = new Map([ ['1', '第 1 組'], ['2', '第 2 組'], ['3', '第 3 組'], ['4', '第 4 組'], ['5', '第 5 組'], ['6', '第 6 組'], ['7', '第 7 組'], ['8', '第 8 組'], ['9', '第 9 組'] ]);
+    let rawAttendanceData = [];
+    
+    
+$(document).ready(function() {
+    initAttendanceTab();
+    
+    // 選項：如果預設頁面就是這個 Tab，可以強制呼叫一次
+    loadAttendanceReport();
+});
+
+
+
+
+/**
+ * 1. 初始化出席紀錄頁籤（綁定事件監聽）
+ */
+function initAttendanceTab() {
+    // 綁定輸入搜尋與各下拉選單的即時過濾事件（前端即時交叉過濾，免重複讀取資料庫）
+    $(document).on('change', '#attendance-year-filter', applyAttendanceFilters);
+    $(document).on('change', '#attendance-month-filter', applyAttendanceFilters);
+    $(document).on('change', '#attendance-group-filter', applyAttendanceFilters);
+    
+    // 當切換到「出席紀錄報表」Tab 時，才進行第一次資料載入 (Lazy Loading)
+    $('#cat-start').on('shown.bs.tab', function () {
+        console.log("Tab 已切換，準備載入...");
+        if (rawAttendanceData.length === 0) {
+            loadAttendanceReport();
+        }
+    });
+}
+
+
+/**
+ * 2. 從 Supabase 讀取出席紀錄（含關聯成員與活動資料）
+ */
+
+async function loadAttendanceReport() {
+    $('#attendance-list').html(`
+        <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                正在載入出席紀錄數據...
+            </td>
+        </tr>
+    `);
+
+    try {
+        // 利用 Supabase 關聯查詢 (Join) 同步撈出活動與會員欄位
+        
+        const { data, error } = await _supabase
+            .from('attendance')
+            .select(`
+                id, status, notes, created_at,
+                activities(title, activity_date),
+                members(name, group_number)
+            `);
+        
+        if (error) {
+            console.error("Supabase 查詢錯誤:", error); // 這行最重要！
+            throw error;
+        }
+
+        // 將資料存入全域變數，並依照活動日期由新到舊排序
+        rawAttendanceData = data || [];
+        rawAttendanceData.sort((a, b) => {
+            const dateA = a.activities?.activity_date || '';
+            const dateB = b.activities?.activity_date || '';
+            return dateB.localeCompare(dateA);
+        });
+
+        // 動態生成「年份」與「組別」與「月份」的下拉選單選項
+        buildDynamicFilters();
+
+        // 執行前端渲染與過濾
+        applyAttendanceFilters();
+
+    } catch (err) {
+        console.error("讀取出席紀錄失敗:", err);
+        $('#attendance-list').html(`
+            <tr>
+                <td colspan="6" class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>讀取資料時發生錯誤：${err.message}
+                </td>
+            </tr>
+        `);
+    }
+}
+
+/**
+ * 3. 動態建置年份、月份與組別選單（從現有資料中不重複收集）
+ */
+function buildDynamicFilters() {
+    const yearsSet = new Set();
+    const monthsSet = new Set(); // 存放 MM 格式
+    const groupsSet = new Set();
+
+    rawAttendanceData.forEach(item => {
+        const member = item.members || {};
+        const activity = item.activities || {};
+
+        // 收集年份與月份 (從活動日期 YYYY-MM-DD 拆解)
+        if (activity.activity_date) {
+            const parts = activity.activity_date.split('-'); // ["2026", "06", "10"]
+            if (parts[0]) yearsSet.add(parts[0]);
+            if (parts[1]) monthsSet.add(parts[1]);
+        }
+
+        // 收集組別 (排除 null / undefined)
+        if (member.group_number !== null && member.group_number !== undefined) {
+            groupsSet.add(member.group_number);
+        }
+    });
+
+    // A. 渲染年份下拉選單 (由大到小排序)
+    const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+    let yearHtml = '<option value="all">全部年份</option>';
+    sortedYears.forEach(y => { yearHtml += `<option value="${y}">${y} 年</option>`; });
+    $('#attendance-year-filter').html(yearHtml);
+
+    // B. 渲染月份下拉選單 (固定 01 ~ 12 月，或者依據現有資料收集，這裡採用固定 1~12 月更直覺)
+    let monthHtml = '<option value="all">全部月份</option>';
+    for (let m = 1; m <= 12; m++) {
+        const mStr = String(m).padStart(2, '0');
+        monthHtml += `<option value="${mStr}">${m} 月</option>`;
+    }
+    $('#attendance-month-filter').html(monthHtml);
+
+    // C. 渲染組別下拉選單 (由小到大排序)
+    const sortedGroups = Array.from(groupsSet).sort((a, b) => a - b);
+    let groupHtml = '<option value="all">全部組別</option>';
+    sortedGroups.forEach(g => {
+        let gName = (typeof groupMap !== 'undefined' && groupMap.has(String(g)))
+            ? groupMap.get(String(g))
+            : g + '組';
+        groupHtml += `<option value="${g}">${gName}</option>`;
+    });
+    $('#attendance-group-filter').html(groupHtml);
+}
+
+/**
+ * 4. 複合四條件過濾 (關鍵字 + 年份 + 月份 + 組別) 與統計計算
+ */
+function applyAttendanceFilters() {
+    const selectedYear = $('#attendance-year-filter').val();
+    const selectedMonth = $('#attendance-month-filter').val();
+    const selectedGroup = $('#attendance-group-filter').val();
+
+    // 進行多條件前端交叉篩選
+    let filtered = rawAttendanceData.filter(item => {
+        const member = item.members || {};
+        const activity = item.activities || {};
+        
+        // A. 年份過濾
+        if (selectedYear !== 'all' && activity.activity_date) {
+            if (!activity.activity_date.startsWith(selectedYear)) return false;
+        }
+
+        // B. 月份過濾 (檢查活動日期 YYYY-MM-DD 的 MM 部分)
+        if (selectedMonth !== 'all' && activity.activity_date) {
+            const parts = activity.activity_date.split('-');
+            if (parts[1] !== selectedMonth) return false;
+        }
+
+        // C. 組別過濾
+        if (selectedGroup !== 'all') {
+            if (String(member.group_number) !== selectedGroup) return false;
+        }
+        
+        return true;
+    });
+
+    // 5. 更新上方儀表板統計數據
+    const totalExpected = filtered.length;
+    const attendedCount = filtered.filter(i => i.status === '出席' || i.status === 'Attended' || i.status === 'Present').length;
+    const absentCount = totalExpected - attendedCount;
+    const rate = totalExpected > 0 ? Math.round((attendedCount / totalExpected) * 100) : 0;
+
+    $('#stat-total-expected').text(totalExpected);
+    $('#stat-actual-attended').html(`${attendedCount} <span class="fs-6 fw-normal text-muted">(${rate}%)</span>`);
+    $('#stat-total-absent').text(absentCount);
+
+    // 6. 開始渲染 HTML 表格
+    if (filtered.length === 0) {
+        $('#attendance-list').html(`<tr><td colspan="6" class="text-center text-muted py-4">查無符合條件的出席紀錄</td></tr>`);
+        return;
+    }
+
+    let html = '';
+    $.each(filtered, function(index, item) {
+        const member = item.members || {};
+        const activity = item.activities || {};
+
+        // 轉換組別文字顯示
+        let displayGroup = '-';
+        if (member.group_number !== null && member.group_number !== undefined) {
+            displayGroup = (typeof groupMap !== 'undefined' && groupMap.has(String(member.group_number)))
+                ? groupMap.get(String(member.group_number))
+                : member.group_number + '組';
+        }
+
+        // 依據 status 狀態顯示 Badge
+        let statusBadge = '';
+        const statusStr = item.status || 'Registered';
+        if (statusStr === '出席' || statusStr === 'Attended' || statusStr === 'Present') {
+            statusBadge = `<span class="badge bg-success-subtle text-success border border-success-subtle">準時出席</span>`;
+        } else if (statusStr === '請假' || statusStr === 'Leave') {
+            statusBadge = `<span class="badge bg-warning-subtle text-warning border border-warning-subtle">請假</span>`;
+        } else if (statusStr === 'Registered') {
+            statusBadge = `<span class="badge bg-info-subtle text-info border border-info-subtle">已報名</span>`;
+        } else {
+            statusBadge = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle">缺席</span>`;
+        }
+
+        const displayActivity = activity.title ? `${activity.title} <small class="text-muted">(${activity.activity_date || ''})</small>` : '-';
+        const displayCheckIn = item.created_at ? new Date(item.created_at).toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit'}) : '-';
+
+        html += `
+            <tr>
+                <td><strong>${member.name || '-'}</strong></td>
+                <td>${displayGroup}</td>
+                <td>${displayActivity}</td>
+                <td>${statusBadge}</td>
+            </tr>
+        `;
+    });
+
+    $('#attendance-list').html(html);
+}
+
+/**
+ * 5. 匯出目前表格內過濾好的出席報表 CSV (同步支援全新篩選結果)
+ */
+function exportAttendanceCsv() {
+    if (rawAttendanceData.length === 0) return alert("目前沒有數據可供匯出");
+    
+    let csvContent = "\uFEFF"; // 解決 Excel 中文亂碼 (BOM)
+    csvContent += "姓名,組別,活動資訊,時間,狀態,備註\n";
+
+    $('#attendance-list tr').each(function() {
+        let rowData = [];
+        $(this).find('td').each(function() {
+            let text = $(this).text().trim().replace(/"/g, '""');
+            rowData.push(`"${text}"`);
+        });
+        if (rowData.length > 0) {
+            csvContent += rowData.join(",") + "\n";
+        }
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `出席紀錄報表_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+</script>
+</body>
+</html>

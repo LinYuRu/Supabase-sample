@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>永和慢跑 - 最新公告全覽</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 900px; margin-top: 50px; margin-bottom: 50px; }
+        .nav-tabs .nav-link { color: #495057; font-weight: bold; }
+        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; }
+        /* 文字排版微調 */
+        .tab-pane {
+            line-height: 1.8;
+            color: #333;
+        }
+        .badge {
+            padding: 0.5em 0.8em;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: #f0f7ff;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="mb-4">
+        <a href="../index2.html" class="btn btn-success text-white">← 返回首頁</a>
+        <a href="./page1.html" class="btn btn-primary text-white">關於永慢</a>
+        <a href="./page2.html" class="btn btn-info text-dark">會務公告</a>
+<!--        <a href="./page3.html" class="btn btn-warning text-dark">定點團練</a>-->
+        <a href="./page4.html" class="btn btn-secondary text-white">會員服務</a>
+        <a href="./page5.html" class="btn btn-danger text-white">獎勵辦法</a>
+        <a href="./DbLife.html" class="btn btn-outline-primary border-2 fw-bold">永慢龍舟隊</a>
+        <h1 class="fw-bold">加入我們</h1>
+    </div>
+    
+    <ul class="nav nav-tabs mb-4" id="announcementTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cat-apply" type="button">會員申請公告</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-contact" type="button">聯絡我們</button>
+        </li>
+    </ul>
+    
+    <div class="tab-content bg-white p-4 rounded shadow-sm border">
+        
+        <div class="tab-pane fade show active" id="cat-apply">
+            <h3 class="fw-bold text-primary mb-4">會員申請公告</h3>
+            <p class="text-secondary">歡迎熱愛慢跑運動、認同本會宗旨的朋友加入永和慢跑俱樂部的大家庭！請詳閱以下申請說明：</p>
+            
+            <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
+                <span class="text-secondary small">準備好加入我們了嗎？點擊右側下載表單。</span>
+                <!-- 建議做法：在新分頁開啟，並嘗試下載 -->
+                <a href="../doc/application_doc_1150704.pdf" target="_blank" download="永和慢跑入會申請書.pdf" class="btn btn-primary">
+                    <i class="bi bi-download me-2"></i>下載申請 PDF
+                </a>
+            </div>
+            
+            <div class="row g-4 mt-2">
+                <div class="col-md-12">
+                    <div class="card border-light bg-light">
+                        <div class="card-body">
+                            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-file-earmark-text-fill text-primary me-2"></i>入會申請流程</h5>
+                            <ol class="ps-3 mb-0">
+                                <li class="mb-2"><strong>填寫申請：</strong>請向服務幹部索取或至網站下載「入會申請書」，填妥基本資料。</li>
+                                <li class="mb-2"><strong>繳交費用：</strong>一般會員需先繳500元入會費及第一年年費1000元，加入時間如為10月以後，下一年度可以免繳年費,但仍應與入會費同時繳納。</li>
+                                <li class="mb-2"><strong>會服領取：</strong>一般會員加入本會可獲運動背心2件，短袖運動衫1件，長袖運動衫1件，請愛借使用。</li>
+                                <li class="mb-2"><strong>終身會員：</strong>一般會員入會一年後可申請加入終身會員，終身年費15,000元。</li>
+                                <li class="mb-2"><strong>學生會員：</strong>學生會員免費，只贈送運動背心1件，其餘自費購買。18歲以下請附家長同意書。</li>
+                                <li><strong>資格審核：</strong>經幹部會議確認並登錄後，即正式成為本會會員，開始享受團報等相關會員服務。</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div class="tab-pane fade" id="cat-contact">
+            <h3 class="fw-bold text-primary mb-4">服務幹部資訊</h3>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th scope="col" style="width: 15%;">職稱</th>
+                        <th scope="col" style="width: 20%;">姓名</th>
+                        <th scope="col" style="width: 50%;">負責執掌</th>
+                        <th scope="col" style="width: 15%;">聯絡信箱</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr><td>理事長</td><td>賴海源</td><td>推動年度工作計畫、統籌各項業務與活動</td><td>-</td></tr>
+                    <tr><td>總幹事</td><td>楊凱涵(Amy)</td><td>統籌、執行行政事務與年度規劃、會員資料管理</td><td>-</td></tr>
+                    <tr><td>副總幹事</td><td>廖月幸</td><td>會訊規劃</td><td>-</td></tr>
+                    <tr><td>副總幹事</td><td>陵逸群(米爸)</td><td>協助大型活動籌備事宜</td><td>-</td></tr>
+                    <tr><td>財務長</td><td>施文聰</td><td>預算編列與執行</td><td><a href="mailto:300marathon@gmail.com" class="text-decoration-none">300marathon@gmail.com</a></td></tr>
+                    <tr><td>總教練</td><td>賴怡廷</td><td>課表規劃安排</td><td>-</td></tr>
+                    <tr><td>訓練團團長</td><td>郭育良</td><td>課表執行、測五千</td><td>-</td></tr>
+                    <tr><td>龍舟隊長</td><td>賴怡文</td><td>龍舟訓練事宜</td><td>-</td></tr>
+                    <tr><td>出勤登錄</td><td>劉傑瑋</td><td>出勤登錄與統計</td><td>-</td></tr>
+                    <tr><td>團隊報名</td><td>李威德</td><td>協助團報賽事、賽事推播</td><td>-</td></tr>
+                    <tr><td>會服管理</td><td>湯嘉蘭</td><td>會服保管與發放</td><td>-</td></tr>
+                    <tr><td>基金管理</td><td>楊舜蓁</td><td>建立會員個人基金、報名基金扣款</td><td>-</td></tr>
+                    <tr><td>社群媒體</td><td>陳榮裕</td><td>對外發言</td><td>-</td></tr>
+                    <tr><td>資訊組</td><td>林昱儒</td><td>網站架設、資料電子化架設</td><td><a href="mailto:peustivate@gmail.com" class="text-decoration-none">peustivate@gmail.com</a></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+
+</script>
+</body>
+</html>

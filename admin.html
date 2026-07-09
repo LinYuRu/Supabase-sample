@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>永和慢跑 - 管理員後台</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root { --primary-color: #0d6efd; }
@@ -505,7 +505,7 @@
     let currentPage = 1;const rowsPerPage = 10;        // 當前所在頁碼&每頁顯示幾筆資料
     // 組別也可以用 Map 維護，方便未來要更改成「A組、B組」或擴充組數
     const genderMap = new Map([ ['Male', '男'], ['Female', '女'] ]);
-    const categoryMap = new Map([ ['Applicant', '申請中 (新入會)'], ['Student', '學生會員'], ['General', '一般會員'], ['Permanent', '永久會員'], ['Retirement', '已退會'] ]);
+    const categoryMap = new Map([ ['Applicant', '申請中 (新入會)'], ['Student', '學生會員'], ['General', '一般會員'], ['Lead', '組長'], ['Permanent', '永久會員'], ['Retirement', '已退會'] ]);
     const groupMap = new Map([ ['1', '第 1 組'], ['2', '第 2 組'], ['3', '第 3 組'], ['4', '第 4 組'], ['5', '第 5 組'], ['6', '第 6 組'], ['7', '第 7 組'], ['8', '第 8 組'], ['9', '第 9 組'] ]);
 
 
@@ -1505,19 +1505,19 @@ async function loadAttendanceReport() {
     try {
         // 利用 Supabase 關聯查詢 (Join) 同步撈出活動與會員欄位
         const { data, error } = await _supabase
-            .from('attendance')
+            .from('vw_public_attendance')
             .select(`
                 id,
                 status,
                 notes,
                 created_at,
-                activities (
+                vw_public_activities (
                     title,
                     activity_date,
                     location,
                     activity_type
                 ),
-                members (
+                vw_public_members (
                     name,
                     group_number,
                     category
@@ -1737,9 +1737,9 @@ function exportAttendanceCsv() {
     document.body.removeChild(link);
 }
 
-$(document).ready(function() {
-    initAttendanceTab();
-});
+<!--$(document).ready(function() {-->
+<!--    initAttendanceTab();-->
+<!--});-->
 
 </script>
 </body>

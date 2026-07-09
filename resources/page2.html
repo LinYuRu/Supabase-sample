@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>永和慢跑 - 最新公告全覽</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 900px; margin-top: 50px; margin-bottom: 50px; }
+        .nav-tabs .nav-link { color: #495057; font-weight: bold; }
+        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; }
+        /* 文字排版微調 */
+        .tab-pane {
+            line-height: 1.8;
+            color: #333;
+        }
+        .badge {
+            padding: 0.5em 0.8em;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: #f0f7ff;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="mb-4">
+        <a href="../index2.html" class="btn btn-success text-white">← 返回首頁</a>
+        <a href="./page1.html" class="btn btn-primary text-white">關於永慢</a>
+<!--        <a href="./page3.html" class="btn btn-warning text-dark">定點團練</a>-->
+        <a href="./page4.html" class="btn btn-secondary text-white">會員服務</a>
+        <a href="./page5.html" class="btn btn-danger text-white">獎勵辦法</a>
+        <a href="./page6.html" class="btn btn-dark text-white">加入我們</a>
+        <a href="./DbLife.html" class="btn btn-outline-primary border-2 fw-bold">永慢龍舟隊</a>
+        <h1 class="fw-bold">會務公告</h1>
+    </div>
+    
+    <ul class="nav nav-tabs mb-4" id="announcementTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cat-story" type="button">每月會訊</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-rights" type="button">會議紀錄</button>
+        </li>
+        <li class="nav-item">
+            <a href="https://docs.google.com/spreadsheets/d/1gwY58Qp--T4bIFH9pXTDlRdG-tjP4gNJ4d23yCgLkA8/edit?gid=126843459#gid=126843459"
+               class="text-dark text-decoration-none fw-bold">
+                <i class="bi bi-megaphone-fill text-warning me-2"></i>財務報告連結
+            </a>
+        </li>
+    </ul>
+    
+    <div class="tab-content bg-white p-4 rounded shadow-sm border">
+        
+        <div class="tab-pane fade show active" id="cat-story">
+            <h3 class="fw-bold text-primary mb-4">每月會訊</h3>
+        </div>
+        
+        
+        <div class="tab-pane fade" id="cat-rights">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold text-primary mb-0">會議紀錄</h3>
+            </div>
+        </div>
+        
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // ======= 功能一：處理來自首頁或其他頁面的網址指定 Tab 跳轉 =======
+            // 取得網址列上的 Hash 值 (例如: #cat-story)
+            const hash = window.location.hash;
+            if (hash) {
+                // 尋找對應代號的 Tab 內容區塊
+                const targetTabPane = document.querySelector(hash);
+                if (targetTabPane) {
+                    // 依據內容區塊，回溯找到上方導覽列對應的按鈕
+                    // 這裡利用了當初設定的 data-bs-target 屬性
+                    const targetTabButton = document.querySelector(`[data-bs-target="${hash}"]`);
+                    
+                    if (targetTabButton) {
+                        // 使用 Bootstrap 內建方法將該頁籤啟用顯示
+                        const tabTrigger = new bootstrap.Tab(targetTabButton);
+                        tabTrigger.show();
+                    }
+                }
+            }
+    
+            // ======= 功能二：控制理事會章則手風琴全部展開與收合 =======
+            const accordionEl = document.getElementById('rightsAccordion');
+            if (accordionEl) {
+                const collapseNodes = accordionEl.querySelectorAll('.accordion-collapse');
+                
+                // 點擊「全部展開」
+                const btnExpandAll = document.getElementById('btnExpandAll');
+                if (btnExpandAll) {
+                    btnExpandAll.addEventListener('click', function() {
+                        collapseNodes.forEach(function(node) {
+                            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(node, { toggle: false });
+                            bsCollapse.show();
+                        });
+                    });
+                }
+    
+                // 點擊「全部收合」
+                const btnCollapseAll = document.getElementById('btnCollapseAll');
+                if (btnCollapseAll) {
+                    btnCollapseAll.addEventListener('click', function() {
+                        collapseNodes.forEach(function(node) {
+                            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(node, { toggle: false });
+                            bsCollapse.hide();
+                        });
+                    });
+                }
+            }
+        });
+
+</script>
+</body>
+</html>

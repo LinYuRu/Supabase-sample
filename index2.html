@@ -174,52 +174,66 @@ body { background-color: #f4f6f9; }
 </div>
 
 <div class="container my-5" style="max-width: 1000px;">
-    
+    <div class="card shadow-sm mb-5 border-0 rounded-3 overflow-hidden" id="latest-announcements">
+        <div class="card-header bg-white py-3 border-bottom border-light text-center position-relative">
+            <a href="https://docs.google.com/spreadsheets/d/1gwY58Qp--T4bIFH9pXTDlRdG-tjP4gNJ4d23yCgLkA8/edit?gid=126843459#gid=126843459"
+               class="stretched-link text-dark text-decoration-none fw-bold">
+                <i class="bi bi-megaphone-fill text-warning me-2"></i>財務報告
+            </a>
+        </div>
+        
+        <div class="card-header bg-white py-3 border-bottom border-light text-center position-relative">
+            <a href="https://docs.google.com/spreadsheets/d/1H-O04jKATsMhGUQyA8j_Zsc9SsP0pdVWKNwJ50q7wrI/edit?gid=350062531#gid=350062531"
+               class="stretched-link text-dark text-decoration-none fw-bold">
+                <i class="bi bi-megaphone-fill text-warning me-2"></i>團報費用紀錄
+            </a>
+        </div>
+    </div>
 
     <div class="card shadow-sm mb-4 border-0 rounded-3 p-4 bg-white">
         <h5 class="section-title-affairs border-start border-4 border-primary ps-2 mb-4">
             <i class="bi me-2"></i>社團會務
         </h5>
-        <div class="row row-cols-3 row-cols-md-3 g-3">
+        <div class="row row-cols-2 row-cols-md-4 g-3">
             <div class="col">
-                <a href="./resources/page1.html#cat-start" class="nav-box btn-color-start">
-                    <i class="bi bi-info-circle-fill"></i>
+                <a href="./resources/page1.html#cat-start" class="btn btn-primary w-100 py-3 shadow-sm">
+                    <i class="bi bi-info-circle-fill d-block fs-3 mb-1"></i>
                     <span>關於永慢</span>
                 </a>
             </div>
             <div class="col">
-                <a href="./resources/introduces.html#cat-rules" class="nav-box btn-color-rules">
-                    <i class="bi bi-megaphone-fill"></i>
+                <a href="./resources/page2.html" class="btn btn-info w-100 py-3 shadow-sm text-white">
+                    <i class="bi bi-megaphone-fill d-block fs-3 mb-1"></i>
                     <span>會務公告</span>
                 </a>
             </div>
             <div class="col">
-                <a href="javascript:void(0)" class="nav-box btn-color-schedule" onclick="openScheduleModal()">
-                    <i class="bi bi-calendar-check-fill"></i>
+                <div class="btn btn-warning w-100 py-3 shadow-sm" onclick="openScheduleModal()">
+                    <i class="bi bi-calendar-check-fill d-block fs-3 mb-1"></i>
                     <span>定點團練</span>
-                </a>
+                </div>
             </div>
             <div class="col">
-                <a href="./resources/introduces.html#cat-member" class="nav-box btn-color-member">
-                    <i class="bi bi-person-badge-fill"></i>
+                <a href="./resources/page4.html" class="btn btn-secondary w-100 py-3 shadow-sm">
+                    <i class="bi bi-person-badge-fill d-block fs-3 mb-1"></i>
                     <span>會員服務</span>
                 </a>
             </div>
             <div class="col">
-                <a href="./resources/introduces.html#cat-rewards" class="nav-box btn-color-rewards">
-                    <i class="bi bi-award-fill"></i>
+                <a href="./resources/page5.html" class="btn btn-danger w-100 py-3 shadow-sm">
+                    <i class="bi bi-award-fill d-block fs-3 mb-1"></i>
                     <span>獎勵辦法</span>
                 </a>
             </div>
             <div class="col">
-                <a href="javascript:void(0)" class="nav-box btn-color-join" onclick="openJoinModal()">
-                    <i class="bi bi-person-plus-fill"></i>
+                <a href="./resources/page6.html" class="btn btn-dark w-100 py-3 shadow-sm" onclick="openJoinModal()">
+                    <i class="bi bi-person-plus-fill d-block fs-3 mb-1"></i>
                     <span>加入我們</span>
                 </a>
             </div>
             <div class="col">
-                <a href="./resources/DbLife.html#cat-contact" class="nav-box btn-color-dragonboat">
-                    <i class="bi bi-water"></i>
+                <a href="./resources/DbLife.html#cat-contact" class="btn btn-success w-100 py-3 shadow-sm">
+                    <i class="bi bi-water d-block fs-3 mb-1"></i>
                     <span>永慢龍舟隊</span>
                 </a>
             </div>
@@ -247,12 +261,6 @@ body { background-color: #f4f6f9; }
                 <a href="https://www.facebook.com/groups/1438023606443591/" target="_blank" class="nav-box box-fb">
                     <i class="bi bi-facebook"></i>
                     <span>永和慢跑FB</span>
-                </a>
-            </div>
-            <div class="col">
-                <a href="http://www.taipeimarathon.org.tw/yhrc/marathon/%E6%B0%B8%E5%92%8C%E9%A6%AC%E6%8B%89%E6%9D%BEindex.htm" class="nav-box btn-color-album">
-                    <i class="bi bi-trophy-fill"></i>
-                    <span>永和馬拉松路跑賽專輯</span>
                 </a>
             </div>
         </div>
