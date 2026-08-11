@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>永和慢跑 - Supabase 分頁版</title>
+    <title>永和慢跑 - Supabase 分頁版2</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -174,79 +174,67 @@ body { background-color: #f4f6f9; }
 </div>
 
 <div class="container my-5" style="max-width: 1000px;">
-    
     <div class="card shadow-sm mb-5 border-0 rounded-3 overflow-hidden" id="latest-announcements">
-        <div class="card-header bg-white py-3 border-bottom border-light">
-            <h5 class="text-dark mb-0 fw-bold border-start border-4 border-warning ps-2">
-                <i class="bi bi-megaphone-fill text-warning me-2"></i>最新公告
-            </h5>
+        <div class="card-header bg-white py-3 border-bottom border-light text-center position-relative">
+            <a href="https://docs.google.com/spreadsheets/d/1gwY58Qp--T4bIFH9pXTDlRdG-tjP4gNJ4d23yCgLkA8/edit?gid=126843459#gid=126843459"
+               class="stretched-link text-dark text-decoration-none fw-bold">
+                <i class="bi bi-megaphone-fill text-warning me-2"></i>財務報告
+            </a>
         </div>
-        <div class="card-body p-0">
-            <div class="list-group list-group-flush" id="preview-list">
-                <div class="p-4 text-center text-muted">
-                    <div class="spinner-border spinner-border-sm text-secondary me-2" role="status"></div>
-                    正在載入最新公告...
-                </div>
-            </div>
+        
+        <div class="card-header bg-white py-3 border-bottom border-light text-center position-relative">
+            <a href="https://docs.google.com/spreadsheets/d/1H-O04jKATsMhGUQyA8j_Zsc9SsP0pdVWKNwJ50q7wrI/edit?gid=350062531#gid=350062531"
+               class="stretched-link text-dark text-decoration-none fw-bold">
+                <i class="bi bi-megaphone-fill text-warning me-2"></i>團報費用紀錄
+            </a>
         </div>
     </div>
+
     <div class="card shadow-sm mb-4 border-0 rounded-3 p-4 bg-white">
         <h5 class="section-title-affairs border-start border-4 border-primary ps-2 mb-4">
             <i class="bi me-2"></i>社團會務
         </h5>
-        <div class="row row-cols-3 row-cols-md-3 g-3">
+        <div class="row row-cols-2 row-cols-md-4 g-3">
             <div class="col">
-                <a href="./resources/introduces.html#cat-start" class="nav-box btn-color-start">
-                    <i class="bi bi-lightning-charge-fill"></i>
-                    <span>成立簡介</span>
+                <a href="./resources/page1.html#cat-start" class="btn btn-primary w-100 py-3 shadow-sm">
+                    <i class="bi bi-info-circle-fill d-block fs-3 mb-1"></i>
+                    <span>關於永慢</span>
                 </a>
             </div>
             <div class="col">
-                <a href="./resources/introduces.html#cat-story" class="nav-box btn-color-story">
-                    <i class="bi bi-balloon-heart-fill"></i>
-                    <span>創會故事</span>
+                <a href="./resources/page2.html" class="btn btn-info w-100 py-3 shadow-sm text-white">
+                    <i class="bi bi-megaphone-fill d-block fs-3 mb-1"></i>
+                    <span>會務公告</span>
                 </a>
             </div>
             <div class="col">
-                <a href="./resources/introduces.html#cat-rights" class="nav-box btn-color-rights">
-                    <i class="bi bi-journal-text"></i>
-                    <span>委員會章則</span>
+                <div class="btn btn-warning w-100 py-3 shadow-sm" onclick="openScheduleModal()">
+                    <i class="bi bi-calendar-check-fill d-block fs-3 mb-1"></i>
+                    <span>定點團練</span>
+                </div>
+            </div>
+            <div class="col">
+                <a href="./resources/page4.html" class="btn btn-secondary w-100 py-3 shadow-sm">
+                    <i class="bi bi-person-badge-fill d-block fs-3 mb-1"></i>
+                    <span>會員服務</span>
                 </a>
             </div>
             <div class="col">
-                <a href="./resources/introduces.html#cat-rewards" class="nav-box btn-color-rewards">
-                    <i class="bi bi-award-fill"></i>
+                <a href="./resources/page5.html" class="btn btn-danger w-100 py-3 shadow-sm">
+                    <i class="bi bi-award-fill d-block fs-3 mb-1"></i>
                     <span>獎勵辦法</span>
                 </a>
             </div>
             <div class="col">
-                <a href="./resources/introduces.html#cat-discipline" class="nav-box btn-color-discipline">
-                    <i class="bi bi-shield-lock-fill"></i>
-                    <span>會員紀律</span>
+                <a href="./resources/page6.html" class="btn btn-dark w-100 py-3 shadow-sm" onclick="openJoinModal()">
+                    <i class="bi bi-person-plus-fill d-block fs-3 mb-1"></i>
+                    <span>加入我們</span>
                 </a>
             </div>
             <div class="col">
-                <a href="./resources/introduces.html#cat-apply" class="nav-box btn-color-apply">
-                    <i class="bi bi-person-plus-fill"></i>
-                    <span>會員申請</span>
-                </a>
-            </div>
-            <div class="col">
-                <a href="./resources/introduces.html#cat-schedule" class="nav-box btn-color-schedule">
-                    <i class="bi bi-calendar-check-fill"></i>
-                    <span>固定團練</span>
-                </a>
-            </div>
-            <div class="col">
-                <a href="./resources/DbLife.html#cat-contact" class="nav-box btn-color-contact">
-                    <i class="bi bi-person-lines-fill"></i>
+                <a href="./resources/DbLife.html#cat-contact" class="btn btn-success w-100 py-3 shadow-sm">
+                    <i class="bi bi-water d-block fs-3 mb-1"></i>
                     <span>永慢龍舟隊</span>
-                </a>
-            </div>
-            <div class="col">
-                <a href="./resources/introduces.html#cat-contact" class="nav-box btn-color-contact">
-                    <i class="bi bi-person-lines-fill"></i>
-                    <span>服務幹部資訊</span>
                 </a>
             </div>
         </div>
@@ -275,19 +263,13 @@ body { background-color: #f4f6f9; }
                     <span>永和慢跑FB</span>
                 </a>
             </div>
-            <div class="col">
-                <a href="http://www.taipeimarathon.org.tw/yhrc/marathon/%E6%B0%B8%E5%92%8C%E9%A6%AC%E6%8B%89%E6%9D%BEindex.htm" class="nav-box btn-color-album">
-                    <i class="bi bi-trophy-fill"></i>
-                    <span>永和馬拉松路跑賽專輯</span>
-                </a>
-            </div>
         </div>
     </div>
 </div>
 <!--首頁HTML END-->
 
 <!--公告START-->
-<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="postModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg"> <div class="modal-content border-0 shadow">
         <div class="modal-header bg-dark text-white">
             <h5 class="modal-title" id="modalTitle">檢視公告</h5>
@@ -319,6 +301,99 @@ body { background-color: #f4f6f9; }
 </div>
 <!--公告END-->
 
+
+<!--團練START-->
+<div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-light border-0 pt-4 px-4">
+                <h4 class="modal-title fw-bold text-primary" id="scheduleModalLabel">📅 固定團練時程表</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <p class="text-muted mb-4">本會提供豐富且系統化的定期團練活動，旨在提升跑步技術、體能耐力與團隊凝聚力。歡迎全體會員踴躍參與！</p>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm bg-info-subtle border-start border-5 border-info">
+                            <div class="card-body">
+                                <h6 class="fw-bold text-info-dominant mb-3" style="color: #0c5460;">錦和田徑場速度團練</h6>
+                                <ul class="list-unstyled small mb-0 text-dark">
+                                    <li class="mb-1"><strong>⏱️ 時間：</strong>週一至週五 05:30</li>
+                                    <li class="mb-1"><strong>📍 地點：</strong>永和錦和運動場（司令台旁）</li>
+                                    <li><strong>🏃 內容：</strong>間歇跑、速度技巧與核心訓練。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm bg-success-subtle border-start border-5 border-success">
+                            <div class="card-body">
+                                <h6 class="fw-bold text-success-dominant mb-3" style="color: #155724;">台大田徑場速度團練</h6>
+                                <ul class="list-unstyled small mb-0 text-dark">
+                                    <li class="mb-1"><strong>⏱️ 時間：</strong>每週二 18:30</li>
+                                    <li class="mb-1"><strong>📍 地點：</strong>台大田徑場（司令台前）</li>
+                                    <li><strong>🏃 內容：</strong>基礎有氧慢跑與伸展指導。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm border-start border-5" style="background-color: #f3e5f5; border-color: #4a148c;">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3" style="color: #4a148c;">週五綠寶石歡樂跑</h6>
+                                <ul class="list-unstyled small mb-0 text-dark">
+                                    <li class="mb-1"><strong>⏱️ 時間：</strong>每週五 06:00</li>
+                                    <li class="mb-1"><strong>📍 地點：</strong>綠寶石陸橋下</li>
+                                    <li><strong>🏃 內容：</strong>恢復跑、社交團練、大合照。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm bg-warning-subtle border-start border-5 border-warning">
+                            <div class="card-body">
+                                <h6 class="fw-bold text-warning-dominant mb-3" style="color: #856404;">週末週六福和橋河濱</h6>
+                                <ul class="list-unstyled small mb-0 text-dark">
+                                    <li class="mb-1"><strong>⏱️ 時間：</strong>第2、4週六 06:00</li>
+                                    <li class="mb-1"><strong>📍 地點：</strong>永福橋下台北市端水漾公園</li>
+                                    <li><strong>🏃 內容：</strong>長距離耐力訓練，含補給。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--團練公告END-->
+
+
+<!--加入我們START-->
+<div class="modal fade" id="joinModal" tabindex="-1" aria-labelledby="joinModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow-lg border-0 rounded-4">
+            <div class="modal-header bg-light border-0 pt-4 px-4">
+                <h4 class="modal-title fw-bold text-primary" id="joinModalLabel">加入我們</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--加入我們END-->
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -327,7 +402,7 @@ body { background-color: #f4f6f9; }
         const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     // 全域宣告公告變數
-    let editModalInstance = null;
+    let postModalInstance = null;
 
     // 定義代碼與中文名稱的對照表
     const categoryMapping = { 'general': '一般公告', 'event': '活動訊息', 'member': '會員專區', 'rules': '理監事會議紀錄' };
@@ -416,17 +491,17 @@ function showAnnouncement(postStr) {
     }
     
     // 5. 顯示彈出視窗
-    if (!editModalInstance) {
-        editModalInstance = new bootstrap.Modal(document.getElementById('editModal'));
+    if (!postModalInstance) {
+        postModalInstance = new bootstrap.Modal(document.getElementById('postModal'));
     }
-    editModalInstance.show();
+    postModalInstance.show();
 }
 
 // 監聽 DOM 載入
 document.addEventListener('DOMContentLoaded', async function() {
     await loadPreview();
     
-    editModalInstance = new bootstrap.Modal(document.getElementById('editModal'));
+    postModalInstance = new bootstrap.Modal(document.getElementById('postModal'));
 
     const targetSection = document.getElementById('latest-announcements');
     if (targetSection) {
@@ -439,6 +514,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
+function openScheduleModal() {
+    var myModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+    myModal.show();
+}
+
+function openJoinModal() {
+    var myModal = new bootstrap.Modal(document.getElementById('joinModal'));
+    myModal.show();
+}
 </script>
 </body>
 </html>
