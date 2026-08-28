@@ -680,8 +680,12 @@ function filterPosts() {
 
 // 優化後的編輯 Modal 開啟方式：透過完整物件避免字串換行與脫模錯誤
 function openEditModalByStr(postStr) {
-    // 若傳入的是 JSON 字串，則解析回物件
-    const post = typeof postStr === 'string' ? JSON.parse(postStr.replace(/&quot;/g, '"')) : postStr;
+    let post;
+    if (typeof postStr === 'string') {
+        // 將 &quot; 還原為雙引號，並將真實換行與控制字元轉換為合法的跳脫字元
+        const safeStr = postStr.replace(/&quot;/g, '"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+        post = JSON.parse(safeStr);
+    } else { post = postStr; }
     
     document.getElementById('modalTitle').innerText = "編輯公告";
     document.getElementById('saveBtn').innerText = "儲存修改";
