@@ -138,11 +138,11 @@
 <!--公告END-->
 <script>
 
-const categoryMapping = { 'general': '一般公告', 'event': '活動訊息', 'member': '會員專區', 'rules': '理監事會議紀錄' };
-// 1. 初始化 Supabase
+
+// 初始化 Supabase
 const SUPABASE_URL = 'https://awenxjiniepxbnbxdefl.supabase.co'; const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g'; const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // 全域宣告公告變數
-let editModalInstance = null;
+let editModalInstance = null; const categoryMapping = { 'general': '一般公告', 'event': '活動訊息', 'member': '會員專區', 'rules': '理監事會議紀錄' };
 
 
 async function loadPreview() {

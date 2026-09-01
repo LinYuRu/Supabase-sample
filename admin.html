@@ -296,6 +296,13 @@
                                 <option value="">請選擇組別</option>
                             </select>
                         </div>
+                        <!-- 新增：組長 Checkbox 開關 -->
+                        <div class="col-md-6 d-flex align-items-center">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" id="m-is_lead">
+                                <label class="form-check-label fw-bold text-primary" for="m-is_lead">指定為該組組長 (Lead)</label>
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">通訊地址</label>
                             <input type="text" id="m-address" class="form-control" placeholder="請輸入完整地址">
@@ -495,61 +502,40 @@
 <!--出席報表tab END-->
 
 <script>
-    const SUPABASE_URL = 'https://awenxjiniepxbnbxdefl.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = 'https://awenxjiniepxbnbxdefl.supabase.co'; const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g'; const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-	
-	// 會員清單排序全域變數：擴充儲存目前表格的排序狀態 (預設組別升冪)
-	let currentSort = { key: 'group_number', asc: true };
-    let currentPage = 1;const rowsPerPage = 10;        // 當前所在頁碼&每頁顯示幾筆資料
-    // 組別也可以用 Map 維護，方便未來要更改成「A組、B組」或擴充組數
-    const genderMap = new Map([ ['Male', '男'], ['Female', '女'] ]);
-    const categoryMap = new Map([ ['Applicant', '申請中 (新入會)'], ['Student', '學生會員'], ['General', '一般會員'], ['Lead', '組長'], ['Permanent', '永久會員'], ['Retirement', '已退會'] ]);
-    const groupMap = new Map([ ['1', '第 1 組'], ['2', '第 2 組'], ['3', '第 3 組'], ['4', '第 4 組'], ['5', '第 5 組'], ['6', '第 6 組'], ['7', '第 7 組'], ['8', '第 8 組'], ['9', '第 9 組'] ]);
+// 會員清單排序全域變數：擴充儲存目前表格的排序狀態 (預設組別升冪)
+let currentSort = { key: 'group_number', asc: true }; let currentPage = 1;const rowsPerPage = 10;        // 當前所在頁碼&每頁顯示幾筆資料
+let editModal, memberModal, activityModal;let currentMemberId = null; let currentActivityId = null; let allPosts = []; let rawAttendanceData = [];
+
+// 組別也可以用 Map 維護，方便未來要更改成「A組、B組」或擴充組數
+const genderMap = new Map([ ['Male', '男'], ['Female', '女'] ]); const categoryMap = new Map([ ['Applicant', '申請中 (新入會)'], ['Student', '學生會員'], ['General', '一般會員'], ['Permanent', '永久會員'], ['Retirement', '已退會'] ]);
+const groupMap = new Map([ ['1', '第 1 組'], ['2', '第 2 組'], ['3', '第 3 組'], ['4', '第 4 組'], ['5', '第 5 組'], ['6', '第 6 組'], ['7', '第 7 組'], ['8', '第 8 組'], ['9', '第 9 組'] ]);
+const catNames = { 'general': '一般公告', 'event': '活動訊息', 'member': '會員專區', 'rules': '理監事會議紀錄' };
 
 
-    let editModal, memberModal, activityModal;
-    let currentMemberId = null;
-    let currentActivityId = null;
-    // 宣告一個全域變數，用來存放從 Supabase 取得的原始公告清單
-    let allPosts = [];
-    // 全域變數暫存出席原始資料FOR報表
-    let rawAttendanceData = [];
+$(document).ready(function() {
+    editModal = new bootstrap.Modal($('#editModal')[0]);
+    memberModal = new bootstrap.Modal($('#memberModal')[0]);
+    activityModal = new bootstrap.Modal($('#activityModal')[0]);
 
-    const catNames = { 'general': '一般公告', 'event': '活動訊息', 'member': '會員專區', 'rules': '理監事會議紀錄' };
+    $('#members-tab').on('shown.bs.tab', () => loadMembers());
+    $('#activities-tab').on('shown.bs.tab', () => loadActivities());
 
-    document.addEventListener('DOMContentLoaded', () => {
-        editModal = new bootstrap.Modal(document.getElementById('editModal'));
-        memberModal = new bootstrap.Modal(document.getElementById('memberModal'));
-        activityModal = new bootstrap.Modal(document.getElementById('activityModal'));
+    // 切換到點名 Tab 時，初始化活動下拉選單
+    $('#record-tab').on('shown.bs.tab', () => loadAttendanceActivitiesDropdown());
 
-        document.getElementById('members-tab').addEventListener('shown.bs.tab', () => loadMembers());
-        document.getElementById('activities-tab').addEventListener('shown.bs.tab', () => loadActivities());
-
-        // 切換到點名 Tab 時，初始化活動下拉選單
-        document.getElementById('record-tab').addEventListener('shown.bs.tab', () => loadAttendanceActivitiesDropdown());
-
-        checkSession();
-        initAttendanceTab();
-    });
+    checkSession();
+    initAttendanceTab();
     
-	document.addEventListener('DOMContentLoaded', function() {
-		// 透過 id 抓取輸入框元素
-		const mNameInput = document.getElementById('m-name');
-		
-		// 確保頁面上確實有這個輸入框才綁定事件
-		if (mNameInput) {
-			mNameInput.addEventListener('change', function(event) {
-				// 取得目前輸入框內的最新文字
-				const currentInputValue = event.target.value;
-				
-				if (currentInputValue.includes('天穎')) {
-					alert('雞掰人不得入會！');
-				}
-			});
-		}
-	});
+    const $mNameInput = $('#m-name');
+    if ($mNameInput.length > 0) {
+        $mNameInput.on('change', function() {
+            const currentInputValue = $(this).val();
+            if (currentInputValue.includes('天穎')) { alert('雞掰人不得入會！'); }
+        });
+    }
+});
 
     async function checkSession() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -755,6 +741,7 @@ function openEditMemberModal(memberStr) {
    $('#m-group_number').val(member.group_number || '');
    $('#m-address').val(member.address || '');
    $('#m-is_student').prop('checked', member.is_student || false);
+   $('#m-is_lead').prop('checked', member.is_lead || false);
    $('#m-entrance_fee_paid').prop('checked', member.entrance_fee_paid || false);
    $('#m-annual_fee_paid_until').val(member.annual_fee_paid_until || '');
    $('#m-is_next_year_free').prop('checked', member.is_next_year_free || false);
@@ -799,19 +786,22 @@ async function submitMember() {
    }
 
    const payload = {
-      name, email, birth_date,
-      gender: $('#m-gender').val() || null,
-      phone: $('#m-phone').val().trim() || null,
-      category: $('#m-category').val(),
-      group_number: $('#m-group_number').val() ? parseInt($('#m-group_number').val()) : null,
-      address: $('#m-address').val().trim() || null,
-      is_student: $('#m-is_student').prop('checked'),
-      entrance_fee_paid: $('#m-entrance_fee_paid').prop('checked'),
-      annual_fee_paid_until: annual_fee_paid_until,
-      is_next_year_free: is_next_year_free,
-      gear_received_json: gear_received_json,
-      updated_by: operatorName
-   };
+    name,
+    email,
+    birth_date,
+    gender: $('#m-gender').val() || null,
+    phone: $('#m-phone').val().trim() || null,
+    category: $('#m-category').val(),
+    group_number: $('#m-group_number').val() ? parseInt($('#m-group_number').val()) : null,
+    address: $('#m-address').val().trim() || null,
+    is_student: $('#m-is_student').prop('checked'),
+    entrance_fee_paid: $('#m-entrance_fee_paid').prop('checked'),
+    annual_fee_paid_until: annual_fee_paid_until,
+    is_next_year_free: is_next_year_free,
+    is_lead: $('#m-is_lead').prop('checked'), // 新增：是否為組長
+    gear_received_json: gear_received_json,
+    updated_by: operatorName
+};
 
    let { error } = currentMemberId ?
       await _supabase.from('members').update(payload).eq('id', currentMemberId) :
@@ -828,7 +818,7 @@ async function submitMember() {
 
 // ─── 修正後的資料加載與綜合渲染 ───
 async function loadMembers() {
-   const { data, error } = await _supabase.from('members').select('*');
+   const { data, error } = await _supabase.from('vw_public_members').select('*');
    if (error) return;
 
    // 1. 動態更新「所有篩選下拉選單」的選項
@@ -963,7 +953,7 @@ async function loadMembers() {
    $('#pagination-controls').html(paginationHtml);
 
 
-   // 6. 渲染表格結構 (此處已修正 g 變數未定義錯誤)
+   // 6. 渲染表格結構
    const categorySortIcon = currentSort.key === 'category' ? (currentSort.asc ? ' ▲' : ' ▼') : '';
    const groupSortIcon = currentSort.key === 'group_number' ? (currentSort.asc ? ' ▲' : ' ▼') : '';
 
@@ -976,6 +966,7 @@ async function loadMembers() {
             <th>聯絡電話</th>
             <th class="sort-th text-primary" data-key="category" style="cursor: pointer; user-select: none;">類別<small>${categorySortIcon}</small></th>
             <th class="sort-th text-primary" data-key="group_number" style="cursor: pointer; user-select: none;">組別<small>${groupSortIcon}</small></th>
+            <th>職務身分</th>
             <th>會費效期</th>
             <th>操作</th>
             </tr>
@@ -988,8 +979,15 @@ async function loadMembers() {
       
       let displayGroup = '-';
       if (m.group_number !== null && m.group_number !== undefined) {
-         // 修正處：將原本的 groupMap.get(String(g)) 改為 groupMap.get(String(m.group_number))
          displayGroup = groupMap.has(String(m.group_number)) ? groupMap.get(String(m.group_number)) : m.group_number + '組';
+      }
+
+      // 判斷 is_lead 狀態來顯示組長或組員
+      let leadBadge = '';
+      if (m.is_lead) {
+         leadBadge = `<span class="badge bg-warning text-dark border border-warning-subtle fw-bold">組長</span>`;
+      } else {
+         leadBadge = `<span class="badge bg-light text-secondary border">組員</span>`;
       }
 
       let displayYearBadge = '';
@@ -1007,6 +1005,7 @@ async function loadMembers() {
             <td>${m.phone || '-'}</td>
             <td><span class="badge bg-light text-dark border">${displayCategory}</span></td>
             <td>${displayGroup}</td>
+            <td>${leadBadge}</td>
             <td>${displayYearBadge}</td>
             <td>
                <button class="btn btn-sm btn-outline-secondary me-1 edit-member-btn" data-member="${memberJson}">

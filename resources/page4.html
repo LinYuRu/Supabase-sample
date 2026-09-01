@@ -252,7 +252,7 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const categoryMap = new Map([ ['Applicant', '申請中 (新入會)'], ['Student', '學生會員'], ['General', '一般會員'], ['Lead', '組長'], ['Permanent', '永久會員'], ['Retirement', '已退會'] ]);
+    const categoryMap = new Map([ ['Applicant', '申請中 (新入會)'], ['Student', '學生會員'], ['General', '一般會員'], ['Permanent', '永久會員'], ['Retirement', '已退會'] ]);
     const groupMap = new Map([ ['1', '第 1 組'], ['2', '第 2 組'], ['3', '第 3 組'], ['4', '第 4 組'], ['5', '第 5 組'], ['6', '第 6 組'], ['7', '第 7 組'], ['8', '第 8 組'], ['9', '第 9 組'] ]);
     let rawAttendanceData = []; let currentPage = 1; const rowsPerPage = 10;
     
@@ -306,7 +306,7 @@ async function loadMembers() {
         return currentSelectedGroup === 'all' || rowGroup === currentSelectedGroup;
     });
 
-    // 4. 排序邏輯：優先比對組別；若同組，則讓 category 為 'Lead' 的排在最前面
+    // 4. 排序邏輯：優先比對組別；若同組，則讓 is_lead 為 true 的排在最前面
     filteredData.sort((a, b) => {
         let valA = a.group_number;
         let valB = b.group_number;
@@ -320,9 +320,9 @@ async function loadMembers() {
             return valA - valB;
         }
         
-        // 若組別相同，讓 Lead (組長) 排在最前面
-        const isLeadA = a.category === 'Lead' ? 0 : 1;
-        const isLeadB = b.category === 'Lead' ? 0 : 1;
+        // 若組別相同，讓 is_lead 為 true (組長) 排在最前面
+        const isLeadA = a.is_lead ? 0 : 1;
+        const isLeadB = b.is_lead ? 0 : 1;
         return isLeadA - isLeadB;
     });
 
@@ -377,10 +377,9 @@ async function loadMembers() {
         let displayCategory = '';
         let badgeClass = '';
         
-        // 判斷是否為組長 (Lead)，並給予不同的樣式與文字
-        if (m.category === 'Lead') {
+        // 判斷是否為組長 (is_lead 為 true)，並給予不同的樣式與文字
+        if (m.is_lead) {
             displayCategory = '組長';
-            // 使用 Bootstrap 警告色系或自訂橘底黑字樣式
             badgeClass = 'bg-warning text-dark fw-bold';
         } else {
             displayCategory = '組員';
