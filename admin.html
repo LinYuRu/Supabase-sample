@@ -682,18 +682,12 @@ function filterPosts() {
 function openEditModalByStr(postStr) {
     let post;
     if (typeof postStr === 'string') {
-        // 將 &quot; 還原為雙引號，並將真實換行與控制字元轉換為合法的跳脫字元
         const safeStr = postStr.replace(/&quot;/g, '"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
         post = JSON.parse(safeStr);
     } else { post = postStr; }
-    
-    document.getElementById('modalTitle').innerText = "編輯公告";
-    document.getElementById('saveBtn').innerText = "儲存修改";
-    document.getElementById('edit-id').value = post.id;
-    document.getElementById('edit-title').value = post.title;
-    document.getElementById('edit-text').value = post.content || "";
-    document.getElementById('edit-category').value = post.category || "general";
-    
+
+    $('#modalTitle').text("編輯公告"); $('#saveBtn').text("儲存修改"); $('#edit-id').val(post.id);
+    $('#edit-title').val(post.title); $('#edit-text').val(post.content || ""); $('#edit-category').val(post.category || "general");
     editModal.show();
 }
 
