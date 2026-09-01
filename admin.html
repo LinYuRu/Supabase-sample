@@ -221,18 +221,19 @@
     </div>
 </div>
 
+<!--公告編輯頁面START-->
 <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title" id="modalTitle">編輯公告</h5>
+            <div class="modal-header bg-dark text-white py-3">
+                <h5 class="modal-title fs-4" id="modalTitle">編輯公告</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
                 <input type="hidden" id="edit-id">
                 <div class="mb-3">
-                    <label class="form-label fw-bold">公告種類</label>
-                    <select id="edit-category" class="form-select">
+                    <label class="form-label fs-5 fw-bold text-dark">公告種類</label>
+                    <select id="edit-category" class="form-select form-select-lg">
                         <option value="general">一般公告</option>
                         <option value="event">活動訊息</option>
                         <option value="member">會員專區</option>
@@ -240,21 +241,23 @@
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-bold">標題</label>
-                    <input type="text" id="edit-title" class="form-control" placeholder="例如：春季團練公告">
+                    <label class="form-label fs-5 fw-bold text-dark">標題</label>
+                    <input type="text" id="edit-title" class="form-control form-control-lg" placeholder="例如：春季團練公告">
                 </div>
                 <div class="mb-0">
-                    <label class="form-label fw-bold">內容</label>
-                    <textarea id="edit-text" class="form-control" rows="6" placeholder="支援 HTML 標籤..."></textarea>
+                    <label class="form-label fs-5 fw-bold text-dark">內容</label>
+                    <textarea id="edit-text" class="form-control" rows="8" placeholder="支援 HTML 標籤..."></textarea>
                 </div>
             </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button onclick="submitSave()" class="btn btn-primary px-4" id="saveBtn">儲存</button>
+            <div class="modal-footer bg-light py-3">
+                <button type="button" class="btn btn-secondary btn-lg px-4" data-bs-dismiss="modal">取消</button>
+                <button onclick="submitSave()" class="btn btn-primary btn-lg px-5" id="saveBtn">儲存</button>
             </div>
         </div>
     </div>
 </div>
+<!--公告編輯頁面END-->
+
 <div class="modal fade" id="memberModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
