@@ -45,10 +45,10 @@
     
     <ul class="nav nav-tabs mb-4" id="announcementTab" role="tablist">
         <li class="nav-item">
-            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#cat-story" type="button">會員編組</button>
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#members-panel" type="button" onclick="loadMembers()">會員編組</button>
         </li>
         <li class="nav-item">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-start" id="attendance-tab">勤跑紀錄</button>
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-start" id="attendance-tab" onclick="loadAttendanceReport()">勤跑紀錄</button>
         </li>
         <li class="nav-item">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#cat-discipline" type="button">權利義務</button>
@@ -56,15 +56,29 @@
     </ul>
     
     <div class="tab-content bg-white p-4 rounded shadow-sm border">
-        
-        <div class="tab-pane fade show active" id="cat-story">
-            <div class="row">
-                <div class="col-lg-8">
-                    <h3 class="fw-bold text-primary mb-4">會員編組</h3>
+
+        <div class="tab-pane fade show active" id="members-panel" role="tabpanel">
+            <div class="row align-items-center mb-4">
+                <div class="col">
+                    <h4 class="fw-bold mb-0">會員編組</h4>
+                </div>
+                <div class="col-auto">
+                    <select id="group-filter" class="form-select shadow-sm" style="min-width: 140px;">
+                        <option value="all">全部組別</option>
+                    </select>
                 </div>
             </div>
+            <div id="members-list"></div>
+            <div class="d-flex justify-content-between align-items-center mt-3 px-2">
+                <div id="pagination-info" class="text-muted small">
+                    顯示第 0 到 0 筆資料，共 0 筆
+                </div>
+                <nav aria-label="Member list pagination">
+                    <ul class="pagination pagination-sm mb-0" id="pagination-controls">
+                    </ul>
+                </nav>
+            </div>
         </div>
-        
 
         
         <!--出席報表tab START-->
@@ -238,18 +252,159 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_-tvu7CWehM2faugobpRR7w_wVl0tL2g';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const categoryMap = new Map([ ['Applicant', '申請中 (新入會)'], ['Student', '學生會員'], ['General', '一般會員'], ['Lead', '組長'], ['Permanent', '永久會員'], ['Retirement', '已退會'] ]);
     const groupMap = new Map([ ['1', '第 1 組'], ['2', '第 2 組'], ['3', '第 3 組'], ['4', '第 4 組'], ['5', '第 5 組'], ['6', '第 6 組'], ['7', '第 7 組'], ['8', '第 8 組'], ['9', '第 9 組'] ]);
-    let rawAttendanceData = [];
+    let rawAttendanceData = []; let currentPage = 1; const rowsPerPage = 10;
     
     
-$(document).ready(function() {
-    initAttendanceTab();
-    
-    // 選項：如果預設頁面就是這個 Tab，可以強制呼叫一次
-    loadAttendanceReport();
+$(document).ready(async function() {
+    initAttendanceTab(); await loadMembers();
+
+    // 分頁按鈕點擊事件
+    $(document).on('click', '.change-page-btn', function(e) {
+        e.preventDefault(); const targetPage = $(this).data('page');
+        if (targetPage) { currentPage = targetPage; loadMembers(); }
+    });
 });
 
+async function loadMembers() {
+    // 1. 從 Supabase 的 vw_public_members 檢視表取得資料
+    const { data, error } = await _supabase.from('vw_public_members').select('*');
+    if (error) {
+        console.error("載入會員資料發生錯誤:", error);
+        return;
+    }
 
+    // 2. 動態更新「組別篩選下拉選單」的選項
+    const $groupFilter = $('#group-filter');
+    const currentSelectedGroup = $groupFilter.val() || 'all';
+    const groupsSet = new Set();
+    
+    $.each(data, function(index, m) {
+        if (m.group_number !== null && m.group_number !== undefined) {
+            groupsSet.add(m.group_number);
+        }
+    });
+    
+    // 渲染組別選單
+    const sortedGroups = Array.from(groupsSet).sort((a, b) => a - b);
+    let groupSelectHtml = `<option value="all">全部組別</option>`;
+    $.each(sortedGroups, function(index, g) {
+        const groupText = (typeof groupMap !== 'undefined' && groupMap.has(String(g))) ? groupMap.get(String(g)) : g + '組';
+        groupSelectHtml += `<option value="${g}">${groupText}</option>`;
+    });
+    groupSelectHtml += `<option value="none">未分組</option>`;
+    $groupFilter.html(groupSelectHtml);
+    
+    if ($groupFilter.find(`option[value="${currentSelectedGroup}"]`).length > 0) {
+        $groupFilter.val(currentSelectedGroup);
+    }
+
+    // 3. 進行前端資料「組別篩選過濾」
+    let filteredData = data.filter(m => {
+        const rowGroup = m.group_number !== null && m.group_number !== undefined ? String(m.group_number) : 'none';
+        return currentSelectedGroup === 'all' || rowGroup === currentSelectedGroup;
+    });
+
+    // 4. 排序邏輯：優先比對組別；若同組，則讓 category 為 'Lead' 的排在最前面
+    filteredData.sort((a, b) => {
+        let valA = a.group_number;
+        let valB = b.group_number;
+        
+        // 未分組置底處理
+        if (valA === null || valA === undefined) return 1;
+        if (valB === null || valB === undefined) return -1;
+        
+        // 若組別不同，依照組別數字升冪排序
+        if (valA !== valB) {
+            return valA - valB;
+        }
+        
+        // 若組別相同，讓 Lead (組長) 排在最前面
+        const isLeadA = a.category === 'Lead' ? 0 : 1;
+        const isLeadB = b.category === 'Lead' ? 0 : 1;
+        return isLeadA - isLeadB;
+    });
+
+    // 5. 計算分頁範圍與資訊
+    const totalRows = filteredData.length;
+    const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+    
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = Math.min(startIndex + rowsPerPage, totalRows);
+    const pageData = filteredData.slice(startIndex, endIndex);
+
+    if (totalRows === 0) {
+        $('#pagination-info').text('查無符合條件的會員資料');
+    } else {
+        $('#pagination-info').text(`顯示第 ${startIndex + 1} 到 ${endIndex} 筆資料，共 ${totalRows} 筆`);
+    }
+
+    // 6. 渲染分頁按鈕 UI
+    let paginationHtml = '';
+    paginationHtml += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link change-page-btn" href="#" data-page="${currentPage - 1}">上一頁</a>
+    </li>`;
+    
+    for (let i = 1; i <= totalPages; i++) {
+        paginationHtml += `<li class="page-item ${currentPage === i ? 'active' : ''}">
+            <a class="page-link change-page-btn" href="#" data-page="${i}">${i}</a>
+        </li>`;
+    }
+    
+    paginationHtml += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+        <a class="page-link change-page-btn" href="#" data-page="${currentPage + 1}">下一頁</a>
+    </li>`;
+    $('#pagination-controls').html(paginationHtml);
+
+    // 7. 渲染表格結構
+    let tableHtml = `
+    <div class="table-responsive bg-white rounded shadow-sm border p-3">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>姓名</th>
+                    <th>類別</th>
+                    <th>組別</th>
+                </tr>
+            </thead>
+            <tbody>`;
+            
+    $.each(pageData, function(index, m) {
+        let displayCategory = '';
+        let badgeClass = '';
+        
+        // 判斷是否為組長 (Lead)，並給予不同的樣式與文字
+        if (m.category === 'Lead') {
+            displayCategory = '組長';
+            // 使用 Bootstrap 警告色系或自訂橘底黑字樣式
+            badgeClass = 'bg-warning text-dark fw-bold';
+        } else {
+            displayCategory = '組員';
+            badgeClass = 'bg-light text-dark border';
+        }
+        
+        let displayGroup = '-';
+        if (m.group_number !== null && m.group_number !== undefined) {
+            displayGroup = (typeof groupMap !== 'undefined' && groupMap.has(String(m.group_number)))
+                ? groupMap.get(String(m.group_number))
+                : m.group_number + '組';
+        }
+        
+        tableHtml += `
+            <tr class="member-row">
+                <td><strong>${m.name}</strong></td>
+                <td><span class="badge ${badgeClass}">${displayCategory}</span></td>
+                <td>${displayGroup}</td>
+            </tr>`;
+    });
+    
+    tableHtml += `</tbody></table></div>`;
+    $('#members-list').html(tableHtml);
+}
 
 
 /**
