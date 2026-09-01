@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>永和慢跑 - 最新公告全覽</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 900px; margin-top: 50px; margin-bottom: 50px; }
+        .nav-tabs .nav-link { color: #495057; font-weight: bold; }
+        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 3px solid #0d6efd; }
+        /* 文字排版微調 */
+        .tab-pane {
+            line-height: 1.8;
+            color: #333;
+        }
+        .badge {
+            padding: 0.5em 0.8em;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: #f0f7ff;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="mb-4">
+        <a href="../index.html" class="btn btn-success text-white">← 返回首頁</a>
+        <a href="../demo.html" class="btn btn-success text-white">施工首頁</a>
+        <h1 class="fw-bold">社團簡介</h1>
+    </div>
+    
+    
+    <article class="container py-4">
+        <!-- 頁首標題區 -->
+        <header class="mb-5 text-center bg-light p-5 rounded shadow-sm border">
+            <h1 class="fw-bold text-primary mb-3">永和慢跑俱樂部簡介</h1>
+            <p class="lead text-secondary mb-0">以「健康、推廣、傳承」為使命，陪伴市民跑過無數足跡的在地社團</p>
+        </header>
+        
+        <!-- 第一區：社團宗旨與背景 -->
+        <section class="mb-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="fw-bold text-primary mb-3"><i class="bi bi-info-circle me-2"></i>社團宗旨與緣起</h3>
+                    <p>永和慢跑俱樂部是隸屬於<strong>台北縣永和市體育會</strong>下的一個人民團體組織，於<strong>民國83年3月</strong>成立。本會依據永和市體育會提倡本市體育運動之宗旨，專以推動中長距離慢跑、越野運動等相關活動，以提升慢跑技術，增進市民健康，發展全民體育為目的。</p>
+                    <p class="mb-0">本會成立之初，由創會長<strong>蕭萬呈</strong>先生帶領30名左右創會會員，勤於練習，參與各項慢跑之活動，積極吸取經驗。並於成立當年（83年10月）在永和市市長<strong>林德福</strong>的鼓勵支持下，舉辦了第一屆永和市市長盃慢跑賽，獲得各界熱烈迴響與肯定，奠定了俱樂部的穩固基礎。</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 第二區：草創考驗與年輕化推廣 -->
+        <section class="mb-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="fw-bold text-primary mb-3"><i class="bi bi-graph-up-arrow me-2"></i>發展歷程與青年推廣</h3>
+                    <p>在經歷艱辛的草創時期後，在<strong>蕭萬呈</strong>、<strong>孫火灶</strong>等前後任會長的帶領下，全體會員出錢出力，南征北討跑遍台灣各地。市長盃路跑賽也在各界有力人士支持下從不間斷（經歷多次風雨競賽及九二一大地震後的賽程），迄第9屆於民國91年10月13日開跑，同時也曾承辦多次由中北獅子會主辦的路跑賽活動。</p>
+                    <p>隨著會員人數成長突破百人，為引導青少年走向正軌、推廣年輕一代的慢跑運動，現任會長蕭萬呈（回鍋會長）積極推動下，獲得林市長及市民代表支持，舉辦了多次<strong>永和市長盃馬拉松接力賽與慢跑邀請賽</strong>。參賽對象擴及永和、中和地區在學的高中、國中、小學男女同學，逐步將慢跑運動正確推廣給年輕一代。</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 第三區：組織架構 -->
+        <section class="mb-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="fw-bold text-primary mb-3"><i class="bi bi-people me-2"></i>組織架構與分工</h3>
+                    <p>目前永和慢跑成員中除<strong>六位幹部</strong>分工處理對外參賽報名、友會交流及各組聯繫外，內部共分為<strong>九組</strong>：</p>
+                    <ul class="list-group list-group-flush mb-0">
+                        <li class="list-group-item bg-transparent"><strong>組別編制：</strong>每組設組長、副組長，負責各項參賽及會內活動聯繫。</li>
+                        <li class="list-group-item bg-transparent"><strong>核心任務：</strong>負責輪辦各項會內活動（如每季會內賽、聚餐等），累積活動經驗並體驗服務樂趣，為凝聚會員向心力的基本組織。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 第四區：年度兩大盛事 -->
+        <section class="mb-5">
+            <h3 class="fw-bold text-primary mb-4"><i class="bi bi-calendar-event me-2"></i>年度兩大盛事</h3>
+            <div class="row g-4">
+                <!-- 運動會 -->
+                <div class="col-md-6">
+                    <div class="card h-100 border-primary shadow-sm">
+                        <div class="card-header bg-primary text-white fw-bold">1. 永和區運動會</div>
+                        <div class="card-body">
+                            <p class="card-text">於每年約四、五月份舉行，是全體會員親自上場比賽表演的活動。跑友們利用晚上下班時間，群聚<strong>福和橋下運動場</strong>共同練習、相互加油打氣，展現團隊精神並爭取佳績。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 市長盃路跑賽 -->
+                <div class="col-md-6">
+                    <div class="card h-100 border-primary shadow-sm">
+                        <div class="card-header bg-primary text-white fw-bold">2. 永和市市長盃路跑賽</div>
+                        <div class="card-body">
+                            <p class="card-text">全體會員集思廣益、分工合作的大型服務盛事。為擴大參賽空間與迎合不同需求，賽程分為三大組別：</p>
+                            <ul class="mb-0">
+                                <li><strong>42.195公里</strong> 全程馬拉松</li>
+                                <li><strong>12公里</strong> 路跑賽</li>
+                                <li><strong>3公里</strong> 健行組</li>
+                            </ul>
+                            <p class="card-text mt-2 small text-muted">無論是慢跑老將或初學者，皆能盡情下場奔放。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </article>
+    
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+
+</script>
+</body>
+</html>

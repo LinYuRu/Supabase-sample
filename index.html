@@ -20,17 +20,17 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
     }
 
-    .category-badge { font-size: 0.75rem; padding: 0.3em 0.8em; border-radius: 50px; }
+    .category-badge { font-size: 0.85rem; padding: 0.3em 0.8em; border-radius: 50px; }
     .bg-general { background-color: #e9ecef; color: #495057; }
     .bg-event { background-color: #cfe2ff; color: #084298; }
     .bg-member { background-color: #d1e7dd; color: #0f5132; }
     .bg-rules { background-color: #fff3cd; color: #664d03; }
 
     #admin-content { display: none; margin-top: 40px; margin-bottom: 60px; }
-body { background-color: #f4f6f9; }
+    body { background-color: #f4f6f9; }
 
 /* ==========================================
-   通用導覽方塊 (Nav-Box) 改版基礎樣式
+   通用導覽方塊 (Nav-Box) 改版基礎樣式 (針對長輩優化放大)
    ========================================== */
 .nav-box {
     display: flex;
@@ -47,13 +47,13 @@ body { background-color: #f4f6f9; }
     overflow: hidden;
 }
 .nav-box i {
-    font-size: 2rem;
+    font-size: 2.3rem; /* 放大圖標 */
     margin-bottom: 8px;
     transition: transform 0.25s ease;
 }
 .nav-box span {
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 1.15rem; /* 放大字體給長輩看 */
+    font-weight: 700;   /* 加粗字體 */
 }
 /* 懸浮微動態效果 */
 .nav-box:hover {
@@ -189,7 +189,7 @@ body { background-color: #f4f6f9; }
             </a>
         </div>
     </div>
-
+    
     <div class="card shadow-sm mb-4 border-0 rounded-3 p-4 bg-white">
         <h5 class="section-title-affairs border-start border-4 border-primary ps-2 mb-4">
             <i class="bi me-2"></i>社團會務
@@ -197,44 +197,44 @@ body { background-color: #f4f6f9; }
         <div class="row row-cols-2 row-cols-md-4 g-3">
             <div class="col">
                 <a href="./resources/page1.html#cat-start" class="btn btn-primary w-100 py-3 shadow-sm">
-                    <i class="bi bi-info-circle-fill d-block fs-3 mb-1"></i>
-                    <span>關於永慢</span>
+                    <i class="bi bi-info-circle-fill d-block fs-2 mb-1"></i>
+                    <span class="fs-5 fw-bold">關於永慢</span>
                 </a>
             </div>
             <div class="col">
                 <a href="./resources/page2.html" class="btn btn-info w-100 py-3 shadow-sm text-white">
-                    <i class="bi bi-megaphone-fill d-block fs-3 mb-1"></i>
-                    <span>會務公告</span>
+                    <i class="bi bi-megaphone-fill d-block fs-2 mb-1"></i>
+                    <span class="fs-5 fw-bold">會務公告</span>
                 </a>
             </div>
             <div class="col">
-                <div class="btn btn-warning w-100 py-3 shadow-sm" onclick="openScheduleModal()">
-                    <i class="bi bi-calendar-check-fill d-block fs-3 mb-1"></i>
-                    <span>定點團練</span>
+                <div class="btn btn-warning w-100 py-3 shadow-sm" onclick="openScheduleModal()" style="cursor: pointer;">
+                    <i class="bi bi-calendar-check-fill d-block fs-2 mb-1"></i>
+                    <span class="fs-5 fw-bold">定點團練</span>
                 </div>
             </div>
             <div class="col">
                 <a href="./resources/page4.html" class="btn btn-secondary w-100 py-3 shadow-sm">
-                    <i class="bi bi-person-badge-fill d-block fs-3 mb-1"></i>
-                    <span>會員服務</span>
+                    <i class="bi bi-person-badge-fill d-block fs-2 mb-1"></i>
+                    <span class="fs-5 fw-bold">會員服務</span>
                 </a>
             </div>
             <div class="col">
                 <a href="./resources/page5.html" class="btn btn-danger w-100 py-3 shadow-sm">
-                    <i class="bi bi-award-fill d-block fs-3 mb-1"></i>
-                    <span>獎勵辦法</span>
+                    <i class="bi bi-award-fill d-block fs-2 mb-1"></i>
+                    <span class="fs-5 fw-bold">獎勵辦法</span>
                 </a>
             </div>
             <div class="col">
                 <a href="./resources/page6.html" class="btn btn-dark w-100 py-3 shadow-sm" onclick="openJoinModal()">
-                    <i class="bi bi-person-plus-fill d-block fs-3 mb-1"></i>
-                    <span>加入我們</span>
+                    <i class="bi bi-person-plus-fill d-block fs-2 mb-1"></i>
+                    <span class="fs-5 fw-bold">加入我們</span>
                 </a>
             </div>
             <div class="col">
                 <a href="./resources/DbLife.html#cat-contact" class="btn btn-success w-100 py-3 shadow-sm">
-                    <i class="bi bi-water d-block fs-3 mb-1"></i>
-                    <span>永慢龍舟隊</span>
+                    <i class="bi bi-water d-block fs-2 mb-1"></i>
+                    <span class="fs-5 fw-bold">永慢龍舟隊</span>
                 </a>
             </div>
         </div>
