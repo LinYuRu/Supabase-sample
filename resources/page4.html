@@ -265,6 +265,18 @@ $(document).ready(async function() {
         e.preventDefault(); const targetPage = $(this).data('page');
         if (targetPage) { currentPage = targetPage; loadMembers(); }
     });
+    
+    // 監聽組別下拉選單的變更事件
+    $('#group-filter').on('change', function() {
+        if (typeof currentPage !== 'undefined') { currentPage = 1; }
+        loadMembers(); // 重新載入並觸發過濾與渲染
+    });
+    
+    // 如果您還沒有綁定分頁按鈕的事件，也需要加上這段才能換頁
+    $('#pagination-controls').on('click', '.change-page-btn', function(e) {
+        e.preventDefault(); const newPage = $(this).data('page');
+        if (newPage && newPage !== currentPage) { currentPage = parseInt(newPage); loadMembers(); }
+    });
 });
 
 async function loadMembers() {
